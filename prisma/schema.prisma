@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id                 Int                @id @default(autoincrement())
+  nome               String
+  email              String             @unique
+  senha              String
+  cpf                String             @unique
+  telefone           String             @unique
+  dataNascimento     DateTime
+  genero             String
+  criadoEm           DateTime           @default(now())
+  casa               Casa?              @relation("DonoCasa")
+  moradores          Casa[]             @relation("Moradores")
+  atribuicoesTarefas AtribuicaoTarefa[]
+  despesasUsuario    DespesaUsuario[]
+}
+
+model Casa {
+  id        Int       @id @default(autoincrement())
+  nome      String
+  endereco  String?
+  criadoEm  DateTime  @default(now())
+  dono      Usuario?  @relation("DonoCasa", fields: [donoId], references: [id])
+  donoId    Int?      @unique
+  moradores Usuario[] @relation("Moradores")
+  tarefas   Tarefa[]
+  despesas  Despesa[]
+}
+
+model Tarefa {
+  id          Int                @id @default(autoincrement())
+  nome        String
+  descricao   String?
+  recorrencia String
+  criadoEm    DateTime           @default(now())
+  casa        Casa               @relation(fields: [casaId], references: [id])
+  casaId      Int
+  atribuicoes AtribuicaoTarefa[]
+}
+
+model AtribuicaoTarefa {
+  id            Int      @id @default(autoincrement())
+  periodoInicio DateTime
+  periodoFim    DateTime
+  concluida     Boolean  @default(false)
+  tarefa        Tarefa   @relation(fields: [tarefaId], references: [id])
+  tarefaId      Int
+  usuario       Usuario  @relation(fields: [usuarioId], references: [id])
+  usuarioId     Int
+}
+
+model Despesa {
+  id         Int              @id @default(autoincrement())
+  nome       String
+  valorTotal Float
+  vencimento DateTime
+  tipo       String?
+  criadoEm   DateTime         @default(now())
+  casa       Casa             @relation(fields: [casaId], references: [id])
+  casaId     Int
+  usuarios   DespesaUsuario[]
+}
+
+model DespesaUsuario {
+  id            Int       @id @default(autoincrement())
+  valor         Float
+  pago          Boolean   @default(false)
+  dataPagamento DateTime?
+  usuario       Usuario   @relation(fields: [usuarioId], references: [id])
+  usuarioId     Int
+  despesa       Despesa   @relation(fields: [despesaId], references: [id])
+  despesaId     Int
+}
