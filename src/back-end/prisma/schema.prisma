@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,29 +8,32 @@ datasource db {
 }
 
 model Usuario {
-  id                 Int                @id @default(autoincrement())
-  nome               String
-  email              String             @unique
-  senha              String
-  cpf                String             @unique
-  telefone           String             @unique
-  dataNascimento     DateTime
-  genero             String
-  criadoEm           DateTime           @default(now())
-  casa               Casa?              @relation("DonoCasa")
-  moradores          Casa[]             @relation("Moradores")
+  id             Int      @id @default(autoincrement())
+  nome           String
+  email          String   @unique
+  senha          String
+  cpf            String   @unique
+  telefone       String   @unique
+  dataNascimento DateTime
+  genero         String
+  criadoEm       DateTime @default(now())
+  moradia        Moradia? @relation("UsuarioMoradia", fields: [moradiaId], references: [id])  // Relacionamento com a moradia
+  moradiaId      Int?     // Referência para a moradia
   atribuicoesTarefas AtribuicaoTarefa[]
   despesasUsuario    DespesaUsuario[]
+  moradiaDono    Moradia? @relation("Donomoradia") // Relacionamento inverso para dono da moradia
+  moradias      Moradia[] @relation("Moradores") // Relacionamento inverso para moradores
 }
 
-model Casa {
+model Moradia {
   id        Int       @id @default(autoincrement())
   nome      String
   endereco  String?
   criadoEm  DateTime  @default(now())
-  dono      Usuario?  @relation("DonoCasa", fields: [donoId], references: [id])
-  donoId    Int?      @unique
-  moradores Usuario[] @relation("Moradores")
+  dono      Usuario?  @relation("Donomoradia", fields: [donoId], references: [id])  // Relacionamento com o dono
+  donoId    Int?      @unique  // Referência única ao dono
+  moradores Usuario[] @relation("Moradores")  // Relacionamento com vários usuários morando na mesma moradia
+  usuarios  Usuario[] @relation("UsuarioMoradia") // Relacionamento inverso para moradia em Usuario
   tarefas   Tarefa[]
   despesas  Despesa[]
 }
@@ -47,9 +44,23 @@ model Tarefa {
   descricao   String?
   recorrencia String
   criadoEm    DateTime           @default(now())
-  casa        Casa               @relation(fields: [casaId], references: [id])
-  casaId      Int
+  moradia     Moradia            @relation(fields: [moradiaId], references: [id])
+  moradiaId   Int
   atribuicoes AtribuicaoTarefa[]
+}
+
+
+
+model Despesa {
+  id         Int              @id @default(autoincrement())
+  nome       String
+  valorTotal Float
+  vencimento DateTime
+  tipo       String?
+  criadoEm   DateTime         @default(now())
+  moradia    Moradia          @relation(fields: [moradiaId], references: [id])
+  moradiaId  Int
+  usuarios   DespesaUsuario[]
 }
 
 model AtribuicaoTarefa {
@@ -61,18 +72,6 @@ model AtribuicaoTarefa {
   tarefaId      Int
   usuario       Usuario  @relation(fields: [usuarioId], references: [id])
   usuarioId     Int
-}
-
-model Despesa {
-  id         Int              @id @default(autoincrement())
-  nome       String
-  valorTotal Float
-  vencimento DateTime
-  tipo       String?
-  criadoEm   DateTime         @default(now())
-  casa       Casa             @relation(fields: [casaId], references: [id])
-  casaId     Int
-  usuarios   DespesaUsuario[]
 }
 
 model DespesaUsuario {

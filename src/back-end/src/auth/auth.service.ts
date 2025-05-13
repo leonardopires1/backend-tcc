@@ -14,20 +14,20 @@ import {
     @Inject()
     private readonly userService: UsersService;
   
-    @Inject('')
+    @Inject()
     private readonly jwtService: JwtService;
   
     async signin(
       params: { email: string; password: string },
     ): Promise<{ access_token: string }> {
       const user = await this.userService.findOne(params.email);
-      if (!user) throw new NotFoundException('User not found');
+      if (!user) throw new NotFoundException('Usuário não encontrado');
 
       if (!user.senha)
         throw new BadRequestException('User password is missing');
 
       const passwordMatch = await bcrypt.compare(params.password, user.senha);
-      if (!passwordMatch) throw new UnauthorizedException('Invalid credentials');
+      if (!passwordMatch) throw new UnauthorizedException('Credenciais inválidas');
   
       const payload = { sub: user.id };
   
