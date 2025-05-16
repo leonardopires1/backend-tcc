@@ -5,6 +5,6 @@ export class CreateUserDto {
   confirmarSenha: string;
   cpf: string;
   telefone: string;
-  dataNascimento: Date;
+  dataNascimento: string;
   genero: 'Feminino' | 'Masculino' | 'Não-binário' | 'Outro';
 }

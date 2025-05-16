@@ -9,11 +9,9 @@ export class UsersController {
 
   @Post()
   async create(@Body() createUserDto: CreateUserDto) {
+    console.log('createUserDto', createUserDto);
     if (!createUserDto.nome || !createUserDto.email || !createUserDto.senha) {
       throw new HttpException('Nome, email e senha são obrigatórios.', HttpStatus.BAD_REQUEST);
-    }
-    if (createUserDto.senha !== createUserDto.confirmarSenha) {
-      throw new HttpException('As senhas não conferem.', HttpStatus.BAD_REQUEST);
     }
     try {
       return await this.usersService.create(createUserDto);
