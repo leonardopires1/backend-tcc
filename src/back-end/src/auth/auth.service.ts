@@ -18,16 +18,18 @@ import {
     private readonly jwtService: JwtService;
   
     async signin(
-      params: { email: string; password: string },
+      params: { email: string; senha: string },
     ): Promise<{ access_token: string }> {
+      console.log('params', params);
       const user = await this.userService.findOne(params.email);
       if (!user) throw new NotFoundException('Usuário não encontrado');
-
-      if (!user.senha)
-        throw new BadRequestException('User password is missing');
-
-      const passwordMatch = await bcrypt.compare(params.password, user.senha);
-      if (!passwordMatch) throw new UnauthorizedException('Credenciais inválidas');
+  
+      if (!user.senha) {
+        throw new UnauthorizedException('Senha não cadastrada para este usuário');
+      }
+  
+      const senhaMatch = await bcrypt.compare(params.senha, user.senha);
+      if (!senhaMatch) throw new UnauthorizedException('Credenciais inválidas');
   
       const payload = { sub: user.id };
   

@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url      = "file:./dev.db"
 }
 
 model Usuario {
@@ -14,7 +14,6 @@ model Usuario {
   senha          String
   cpf            String   @unique
   telefone       String   @unique
-  dataNascimento DateTime
   genero         String
   criadoEm       DateTime @default(now())
   moradia        Moradia? @relation("UsuarioMoradia", fields: [moradiaId], references: [id])  // Relacionamento com a moradia
@@ -28,6 +27,7 @@ model Usuario {
 model Moradia {
   id        Int       @id @default(autoincrement())
   nome      String
+  descricao String    @default("Moradia compartilhada")
   endereco  String?
   criadoEm  DateTime  @default(now())
   dono      Usuario?  @relation("Donomoradia", fields: [donoId], references: [id])  // Relacionamento com o dono

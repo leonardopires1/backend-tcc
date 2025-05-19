@@ -10,7 +10,7 @@ import { AuthGuard } from './auth.guard';
     forwardRef(() => UsersModule),
     JwtModule.register({
       global: true,
-      secret: process.env.SECRET_KEY,
+      secret: process.env.SECRET_KEY || 'defaultSecretKey',
       signOptions: { expiresIn: '86400s' },
     }),
   ],
