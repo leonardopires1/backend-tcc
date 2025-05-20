@@ -97,6 +97,7 @@ export class MoradiasService {
       select: {
         id: true,
         nome: true,
+        descricao: true, 
         endereco: true,
         dono: { select: { id: true, nome: true, email: true } },
       },
@@ -129,7 +130,7 @@ export class MoradiasService {
     try {
       return await this.prisma.moradia.update({
         where: { id },
-        data,
+        data: data,
         select: {
           id: true,
           nome: true,

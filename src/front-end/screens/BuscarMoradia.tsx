@@ -1,35 +1,14 @@
 import { SafeAreaView, StyleSheet, View, Text, Image, ScrollView, TouchableOpacity, StatusBar } from "react-native"
-import { Ionicons, FontAwesome } from "@expo/vector-icons"
+import { Ionicons } from "@expo/vector-icons"
 import MapView, { Marker } from "react-native-maps"
 import React, { useEffect, useState } from "react"
+import Moradia from "../types/Moradia"
+import MoradiaCard from "../components/moradiaCard"
+import FetchMoradias from "../api/Moradias"
 
 export default function BuscarMoradia() {
 
-interface Republica {
-    id: number
-    name: string
-    description: string
-    rating: number
-    vacancies: number
-    residents: number
-    price: number
-    image: string
-}
-
-const formatPrice = (price: number): string => {
-    return price.toFixed(2).replace(".", ",")
-}
-
-  const [republicas, setRepublicas] = useState<Republica[]>([])
-
-  useEffect(() => {
-    const fetchRepublicas = async () => {
-      const response = await fetch("https://api.example.com/republicas")
-      const data = await response.json()
-      setRepublicas(data)
-    }
-    fetchRepublicas()
-  }, [])
+  const Moradias: Moradia[] = FetchMoradias()
 
   return (
     <SafeAreaView style={styles.container}>
@@ -69,36 +48,12 @@ const formatPrice = (price: number): string => {
           </MapView>
         </View>
 
-        {/* Title Section */}
         <View style={styles.titleContainer}>
           <Text style={styles.titleText}>Mais de dez repúblicas com vagas</Text>
         </View>
 
-        {/* República Listings */}
-        {republicas.map((republica) => (
-          <View key={republica.id} style={styles.republicaCard}>
-            <Image source={{ uri: republica.image }} style={styles.republicaImage} resizeMode="cover" />
-            <View style={styles.republicaInfo}>
-              <Text style={styles.republicaName}>{republica.name}</Text>
-              <Text style={styles.republicaDescription}>{republica.description}</Text>
-
-              <View style={styles.ratingContainer}>
-                <FontAwesome name="star" size={16} color="black" />
-                <Text style={styles.ratingText}>{republica.rating}</Text>
-              </View>
-
-              <Text style={styles.vacanciesText}>{republica.vacancies} vagas disponíveis</Text>
-              <Text style={styles.residentsText}>{republica.residents} moradores</Text>
-
-              <View style={styles.priceContainer}>
-                <Text style={styles.priceLabel}>a partir de</Text>
-                <View style={styles.priceWrapper}>
-                  <Text style={styles.priceCurrency}>R$</Text>
-                  <Text style={styles.priceValue}>{formatPrice(republica.price)}</Text>
-                </View>
-              </View>
-            </View>
-          </View>
+        {Moradias.map((moradia) => (
+          <MoradiaCard key={moradia.id} moradia={moradia} />
         ))}
       </ScrollView>
     </SafeAreaView>
@@ -166,27 +121,27 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
-  republicaCard: {
+  moradiaCard: {
     flexDirection: "row",
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
   },
-  republicaImage: {
+  moradiaImage: {
     width: 120,
     height: 120,
     borderRadius: 8,
   },
-  republicaInfo: {
+  moradiaInfo: {
     flex: 1,
     marginLeft: 16,
   },
-  republicaName: {
+  moradiaName: {
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 4,
   },
-  republicaDescription: {
+  moradiaDescription: {
     fontSize: 14,
     color: "#666",
     marginBottom: 8,

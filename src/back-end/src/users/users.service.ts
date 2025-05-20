@@ -18,8 +18,6 @@ export class UsersService {
 
     const senhaHash = await bcrypt.hash(createUserDto.senha, 10);
 
-    let data_nasc: string[] = createUserDto.dataNascimento.split('/');
-
     return this.prisma.usuario.create({
       data: {
         nome: createUserDto.nome,
@@ -27,10 +25,6 @@ export class UsersService {
         senha: senhaHash,
         cpf: createUserDto.cpf,
         genero: createUserDto.genero,
-<<<<<<< HEAD
-=======
-        dataNascimento: new Date(+data_nasc[2], +data_nasc[1] - 1, +data_nasc[0]),
->>>>>>> 2bd11c56f8c862f9f07b97a3e0f95e7ba927818a
         telefone: createUserDto.telefone,
       },
       select: {
@@ -41,33 +35,33 @@ export class UsersService {
     });
   }
 
-  // private async checkUniqueFields(createUserDto: CreateUserDto) {
-  //   const fieldsToCheck = [
-  //     { field: 'email', value: createUserDto.email },
-  //     { field: 'cpf', value: createUserDto.cpf },
-  //     { field: 'telefone', value: createUserDto.telefone },
-  //   ];
+  private async checkUniqueFields(createUserDto: CreateUserDto) {
+    const fieldsToCheck = [
+      { field: 'email', value: createUserDto.email },
+      { field: 'cpf', value: createUserDto.cpf },
+      { field: 'telefone', value: createUserDto.telefone },
+    ];
 
-  //   for (const { field, value } of fieldsToCheck) {
-  //     if (!value) continue; // Pula se o valor não foi enviado
-  //     if (field === 'cpf' && value.length !== 11) {
-  //       throw new HttpException(
-  //         'CPF deve ter 11 dígitos.',
-  //         HttpStatus.BAD_REQUEST,
-  //       );
-  //     }
-  //     const existingUser = await this.prisma.usuario.findFirst({
-  //       where: { [field]: value },
-  //     });
+    for (const { field, value } of fieldsToCheck) {
+      if (!value) continue; // Pula se o valor não foi enviado
+      if (field === 'cpf' && value.length !== 11) {
+        throw new HttpException(
+          'CPF deve ter 11 dígitos.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      const existingUser = await this.prisma.usuario.findFirst({
+        where: { [field]: value },
+      });
 
-  //     if (existingUser) {
-  //       throw new HttpException(
-  //         `${field.charAt(0).toUpperCase() + field.slice(1)} já está em uso.`,
-  //         HttpStatus.BAD_REQUEST,
-  //       );
-  //     }
-  //   }
-  // }
+      if (existingUser) {
+        throw new HttpException(
+          `${field.charAt(0).toUpperCase() + field.slice(1)} já está em uso.`,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+    }
+  }
 
   async findAll() {
     return this.prisma.usuario.findMany({
