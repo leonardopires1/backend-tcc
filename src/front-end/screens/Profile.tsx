@@ -2,7 +2,7 @@ import { SafeAreaView, StyleSheet, View, Text, Image, TouchableOpacity, Dimensio
 
 const { width } = Dimensions.get("window")
 
-export const Perfil = () => {
+export const Profile = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#076df2" />
@@ -136,5 +136,3 @@ const styles = StyleSheet.create({
     marginVertical: 16,
   },
 })
-
-export default Perfil

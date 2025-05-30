@@ -12,7 +12,7 @@ import {
 
 const { width } = Dimensions.get('window');
 
-const App = () => {
+export default function PerfilMoradia() {
   const [expandedRoom1, setExpandedRoom1] = useState(false);
   const [expandedRoom2, setExpandedRoom2] = useState(false);
 
@@ -324,5 +324,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-
-export default App;

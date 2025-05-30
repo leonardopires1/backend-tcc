@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useState } from 'react';
 import {
   View,
@@ -9,12 +10,54 @@ import {
   StatusBar,
 } from 'react-native';
 
-export default function App() {
+export default function CadastrarMoradia() {
   const [nomeRepublica, setNomeRepublica] = useState('');
   const [cep, setCep] = useState('');
 
-  const handleCriarMoradia = () => {
-    console.log('Criar moradia:', { nomeRepublica, cep });
+  const handleCriarMoradia = async () => {
+    const user = await AsyncStorage.getItem('user'); // Pega o ID do usuário autenticado do storage
+    const userId = user ? JSON.parse(user).id : null;
+
+    if (!nomeRepublica.trim()) {
+      alert('Por favor, informe o nome da república.');
+      return;
+    }
+
+    if (!cep.trim()) {
+      alert('Por favor, informe o CEP.');
+      return;
+    }
+
+    const cepRegex = /^[0-9]{8}$/;
+    if (!cepRegex.test(cep)) {
+      alert('CEP inválido. Deve conter 8 dígitos numéricos.');
+      return;
+    }
+
+    if (!userId) {
+      alert('Usuário não autenticado. Por favor, faça login.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${process.env.API_URL}/moradias/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nomeRepublica: nomeRepublica.trim(),
+          cep: cep.trim(),
+          userId: userId, // Envia o ID do usuário autenticado
+        }),
+      });
+
+      alert('Moradia cadastrada com sucesso!');
+      setNomeRepublica('');
+      setCep('');
+    } catch (error) {
+      alert('Erro ao cadastrar moradia. Tente novamente.');
+    }
   };
 
   return (

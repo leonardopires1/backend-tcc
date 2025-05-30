@@ -6,6 +6,10 @@ import Login from "./screens/Login";
 import Home from "./screens/Home";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import BuscarMoradia from "./screens/BuscarMoradia";
+import BoasVindas from "./screens/BoasVindas";
+import CadastrarMoradia from "./screens/CadastrarMoradia";
+import PerfilMoradia from "./screens/PerfilMoradia";
+import { Profile } from "./screens/Profile";
 
 const Stack = createNativeStackNavigator();
 
@@ -31,17 +35,25 @@ const App = () => {
       {userToken ? (
         <Stack.Navigator initialRouteName="BuscarMoradia">
           <Stack.Screen name="Home" component={Home} />
-          <Stack.Screen name="Cadastro" component={Cadastro} options={{title: '', headerTransparent: true, headerShown: false}} />
-          <Stack.Screen name="Login" component={Login} options={{title: '', headerTransparent: true, headerShown: false}}/>
-          <Stack.Screen name="BuscarMoradia" component={BuscarMoradia} options={{title: '', headerTransparent: true, headerShown: false}} />
+          <Stack.Screen name="Cadastro" component={Cadastro} options={{ title: '', headerTransparent: true, headerShown: false }} />
+          <Stack.Screen name="Login" component={Login} options={{ title: '', headerTransparent: true, headerShown: false }} />
+          <Stack.Screen name="BuscarMoradia" component={BuscarMoradia} options={{ title: '', headerTransparent: true, headerShown: false }} />
+          <Stack.Screen name="BoasVindas" component={BoasVindas} options={{ title: '', headerTransparent: true, headerShown: false }} />
+          <Stack.Screen name="CadastrarMoradia" component={CadastrarMoradia} options={{ title: '', headerTransparent: true, headerShown: false }} />
+          <Stack.Screen name="PerfilMoradia" component={PerfilMoradia} options={{ title: '', headerTransparent: true, headerShown: false }} />
+          <Stack.Screen name="Profile" component={Profile} options={{ title: '', headerTransparent: true, headerShown: false }} />
         </Stack.Navigator>
       ) : (
         <>
           <Stack.Navigator initialRouteName="BuscarMoradia">
-            <Stack.Screen name="Cadastro" component={Cadastro} options={{title: '', headerTransparent: true, headerShown: false}}/>
-            <Stack.Screen name="Login" component={Login} options={{title: '', headerTransparent: true, headerShown: false}}/>
+            <Stack.Screen name="Cadastro" component={Cadastro} options={{ title: '', headerTransparent: true, headerShown: false }} />
+            <Stack.Screen name="Login" component={Login} options={{ title: '', headerTransparent: true, headerShown: false }} />
             <Stack.Screen name="Home" component={Home} />
-            <Stack.Screen name="BuscarMoradia" component={BuscarMoradia} options={{title: '', headerTransparent: true, headerShown: false}}/>
+            <Stack.Screen name="BuscarMoradia" component={BuscarMoradia} options={{ title: '', headerTransparent: true, headerShown: false }} />
+            <Stack.Screen name="BoasVindas" component={BoasVindas} options={{ title: '', headerTransparent: true, headerShown: false }} />
+            <Stack.Screen name="CadastrarMoradia" component={CadastrarMoradia} options={{ title: '', headerTransparent: true, headerShown: false }} />
+            <Stack.Screen name="PerfilMoradia" component={PerfilMoradia} options={{ title: '', headerTransparent: true, headerShown: false }} />
+            <Stack.Screen name="Profile" component={Profile} options={{ title: '', headerTransparent: true, headerShown: false }} />
           </Stack.Navigator>
         </>
       )}

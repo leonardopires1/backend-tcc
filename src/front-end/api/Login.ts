@@ -28,7 +28,6 @@ export default async function requisitaLogin(email: string, senha: string, mante
           alert("Login bem-sucedido!");
           // Navegar para a próxima tela ou realizar outra ação
           return navigation.navigate("Home");
-          
         } catch (e) {
           console.error("Failed to save the token", e);
           alert("Falha ao salvar informações de login.");
@@ -38,7 +37,12 @@ export default async function requisitaLogin(email: string, senha: string, mante
         alert("Token de acesso não encontrado na resposta.");
         return false;
       }
-    } else {
+    } else if (access_token.ok) {
+      const data = await access_token.json();
+      alert(`Login bem-sucedido!`);
+      await AsyncStorage.setItem("user", data.user);
+      return navigation.navigate("Home");
+    }else {
       const errorData = await access_token
         .json()
         .catch(() => ({ message: "Erro desconhecido" }));

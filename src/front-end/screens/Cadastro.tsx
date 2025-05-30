@@ -58,7 +58,7 @@ export default function Cadastro({ navigation }: { navigation: any }) {
 
     try {
       const { confirmarSenha, ...data } = formData;
-      const res = await fetch("http://192.168.0.16:3000/users/", {
+      const res = await fetch(`${process.env.API_URL}/users/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
