@@ -46,6 +46,15 @@ export class MoradiasController {
     }
   }
 
+  @Patch(':id/regras')
+  async updateRegras(@Param('id') id: string, @Body() regras: { id: number[] }) {
+    try {
+      return await this.moradiasService.updateRegras(+id, regras.id);
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+    }
+  }
+
   @Delete(':id')
   async remove(@Param('id') id: string) {
     try {

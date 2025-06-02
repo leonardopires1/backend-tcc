@@ -14,4 +14,7 @@ export class CreateMoradiaDto {
     vencimento: Date;
     tipo?: string;
   }[];
+  regras: {
+    id: number[];
+  }
 }

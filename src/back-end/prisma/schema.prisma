@@ -36,6 +36,7 @@ model Moradia {
   usuarios  Usuario[] @relation("UsuarioMoradia") // Relacionamento inverso para moradia em Usuario
   tarefas   Tarefa[]
   despesas  Despesa[]
+  regrasMoradia RegrasMoradia[]
 }
 
 model Tarefa {
@@ -83,4 +84,19 @@ model DespesaUsuario {
   usuarioId     Int
   despesa       Despesa   @relation(fields: [despesaId], references: [id])
   despesaId     Int
+}
+
+model Regras {
+  id          Int      @id @default(autoincrement())
+  tituko        String
+  descricao   String?
+  regrasMoradia RegrasMoradia[]
+}
+
+model RegrasMoradia {
+  id          Int      @id @default(autoincrement())
+  moradia     Moradia  @relation(fields: [moradiaId], references: [id])
+  moradiaId   Int
+  regra       Regras   @relation(fields: [regraId], references: [id])
+  regraId     Int
 }

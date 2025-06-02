@@ -6,7 +6,6 @@ CREATE TABLE "Usuario" (
     "senha" TEXT NOT NULL,
     "cpf" TEXT NOT NULL,
     "telefone" TEXT NOT NULL,
-    "dataNascimento" DATETIME NOT NULL,
     "genero" TEXT NOT NULL,
     "criadoEm" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "moradiaId" INTEGER,
@@ -17,6 +16,7 @@ CREATE TABLE "Usuario" (
 CREATE TABLE "Moradia" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "nome" TEXT NOT NULL,
+    "descricao" TEXT NOT NULL DEFAULT 'Moradia compartilhada',
     "endereco" TEXT,
     "criadoEm" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "donoId" INTEGER,
@@ -68,6 +68,22 @@ CREATE TABLE "DespesaUsuario" (
     "despesaId" INTEGER NOT NULL,
     CONSTRAINT "DespesaUsuario_usuarioId_fkey" FOREIGN KEY ("usuarioId") REFERENCES "Usuario" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "DespesaUsuario_despesaId_fkey" FOREIGN KEY ("despesaId") REFERENCES "Despesa" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "Regras" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "tituko" TEXT NOT NULL,
+    "descricao" TEXT
+);
+
+-- CreateTable
+CREATE TABLE "RegrasMoradia" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "moradiaId" INTEGER NOT NULL,
+    "regraId" INTEGER NOT NULL,
+    CONSTRAINT "RegrasMoradia_moradiaId_fkey" FOREIGN KEY ("moradiaId") REFERENCES "Moradia" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "RegrasMoradia_regraId_fkey" FOREIGN KEY ("regraId") REFERENCES "Regras" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- CreateTable

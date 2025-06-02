@@ -23,6 +23,7 @@ export class MoradiasService {
       moradoresIds = [],
       tarefas = [],
       despesas = [],
+      regras = { id: [] },
     } = createMoradiaDto;
 
     // Verifica se o dono existe
@@ -74,8 +75,10 @@ export class MoradiasService {
             tipo: despesa.tipo,
           })),
         },
-      },
-    });
+        regrasMoradia: {
+          connect: regras.id.map((id) => ({ id })),
+        },
+    }});
 
     // Atualiza os usuários para vinculá-los à nova moradia
     await Promise.all(
@@ -111,9 +114,11 @@ export class MoradiasService {
         id: true,
         nome: true,
         endereco: true,
+        regrasMoradia: true,
         dono: { select: { id: true, nome: true, email: true } },
       },
     });
+
     if (!moradia) throw new NotFoundException('Moradia não encontrada');
     return moradia;
   }
@@ -142,6 +147,27 @@ export class MoradiasService {
       throw new NotFoundException(
         'Moradia não encontrada ou erro ao atualizar',
       );
+    }
+  }
+
+  async updateRegras(moradiaId: number, regraId: number[]) {
+    try {
+      return await this.prisma.moradia.update({
+        where: { id: moradiaId },
+        data: {
+          regrasMoradia: {
+            connect: regraId.map(id => ({ id })),
+          },
+        },
+        select: {
+          id: true,
+          nome: true,
+          endereco: true,
+          regrasMoradia: true,
+        },
+      });
+    } catch (error) {
+      throw new NotFoundException('Moradia ou regra não encontrada');
     }
   }
 

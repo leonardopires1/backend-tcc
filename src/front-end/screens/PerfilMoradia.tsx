@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,12 +7,21 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  Dimensions,
 } from 'react-native';
 
-const { width } = Dimensions.get('window');
-
 export default function PerfilMoradia() {
+  useEffect(() => {
+    const fetchData = async () => {
+      const id = 1;
+      const res = await fetch(`${process.env.API_URL}/moradias/${id}`)
+      const data = await res.json();
+      setDataMoradia(data);
+    };
+    
+    fetchData();
+  }, []);
+
+  const [dataMoradia, setDataMoradia] = useState<any>()
   const [expandedRoom1, setExpandedRoom1] = useState(false);
   const [expandedRoom2, setExpandedRoom2] = useState(false);
 
@@ -33,7 +42,7 @@ export default function PerfilMoradia() {
         {/* Hero Image */}
         <View style={styles.imageContainer}>
           <Image
-            source={require('../assets/images/casa.jpeg')} // Adjust the path as needed
+            source={require('../assets/images/casa.jpeg')}
             style={styles.heroImage}
             resizeMode="cover"
           />
@@ -42,82 +51,73 @@ export default function PerfilMoradia() {
         {/* Content */}
         <View style={styles.content}>
           {/* Title Section */}
-          <Text style={styles.title}>República Taverna</Text>
-          <Text style={styles.subtitle}>A melhor república de Bauru :)</Text>
+          <Text style={styles.title}>{dataMoradia?.nome || 'Nome da República'}</Text>
+          <Text style={styles.subtitle}>{dataMoradia?.descricao || 'Descrição da república'}</Text>
 
           {/* Rating */}
           <View style={styles.ratingContainer}>
-            <Text style={styles.rating}>4.87</Text>
-            <Text style={styles.ratingText}>3° maior nota da cidade!</Text>
+            <Text style={styles.rating}>{dataMoradia?.nota ? dataMoradia.nota.toFixed(2) : '--'}</Text>
+            <Text style={styles.ratingText}>{dataMoradia?.ranking ? `${dataMoradia.ranking}° maior nota da cidade!` : ''}</Text>
           </View>
 
           {/* Administrator */}
           <View style={styles.adminContainer}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>AB</Text>
+              <Text style={styles.avatarText}>
+                {dataMoradia?.administrador?.nome
+                  ? dataMoradia.administrador.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase()
+                  : 'AB'}
+              </Text>
             </View>
             <View style={styles.adminInfo}>
-              <Text style={styles.adminName}>Administrador: André Bicudo</Text>
-              <Text style={styles.adminTime}>morador há cinco anos</Text>
+              <Text style={styles.adminName}>
+                Administrador: {dataMoradia?.administrador?.nome || 'Nome do Administrador'}
+              </Text>
+              <Text style={styles.adminTime}>
+                {dataMoradia?.administrador?.tempoMoradia
+                  ? `morador há ${dataMoradia.administrador.tempoMoradia}`
+                  : ''}
+              </Text>
             </View>
           </View>
 
           {/* Rules and Amenities */}
           <Text style={styles.sectionTitle}>Regras e comodidades</Text>
-          
-          <View style={styles.amenityItem}>
-            <View style={styles.amenityIcon}>
-              <Text style={styles.checkIcon}>✓</Text>
+          {dataMoradia?.comodidades?.map((item: string, idx: number) => (
+            <View style={styles.amenityItem} key={idx}>
+              <View style={styles.amenityIcon}>
+                <Text style={styles.checkIcon}>✓</Text>
+              </View>
+              <Text style={styles.amenityText}>{item}</Text>
             </View>
-            <Text style={styles.amenityText}>permitido usar a cozinha</Text>
-          </View>
-
-          <View style={styles.amenityItem}>
-            <View style={styles.amenityIcon}>
-              <Text style={styles.checkIcon}>✓</Text>
-            </View>
-            <Text style={styles.amenityText}>área de lazer</Text>
-          </View>
-
-          <View style={styles.amenityItem}>
-            <View style={styles.amenityIcon}>
-              <Text style={styles.checkIcon}>✓</Text>
-            </View>
-            <Text style={styles.amenityText}>possui garagem</Text>
-          </View>
-
-          <View style={styles.amenityItem}>
-            <View style={styles.amenityIcon}>
-              <Text style={styles.checkIcon}>✓</Text>
-            </View>
-            <Text style={styles.amenityText}>residência mobiliada</Text>
-          </View>
+          ))}
 
           {/* Available Rooms */}
           <Text style={styles.sectionTitle}>Vagas disponíveis</Text>
-
-          <TouchableOpacity 
-            style={styles.roomItem}
-            onPress={() => setExpandedRoom1(!expandedRoom1)}
-          >
-            <Text style={styles.roomText}>Quarto solo, banheiro compartilhado</Text>
-            <Text style={styles.chevron}>{expandedRoom1 ? '⌄' : '›'}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.roomItem}
-            onPress={() => setExpandedRoom2(!expandedRoom2)}
-          >
-            <Text style={styles.roomText}>Quarto compartilhado, banheiro compartilhado</Text>
-            <Text style={styles.chevron}>{expandedRoom2 ? '⌄' : '›'}</Text>
-          </TouchableOpacity>
+          {dataMoradia?.quartos?.map((quarto: any, idx: number) => (
+            <TouchableOpacity
+              style={styles.roomItem}
+              key={idx}
+              onPress={() => {
+                if (idx === 0) setExpandedRoom1(!expandedRoom1);
+                if (idx === 1) setExpandedRoom2(!expandedRoom2);
+              }}
+            >
+              <Text style={styles.roomText}>
+                {quarto.tipo}, {quarto.banheiro}
+              </Text>
+              <Text style={styles.chevron}>
+                {(idx === 0 && expandedRoom1) || (idx === 1 && expandedRoom2) ? '⌄' : '›'}
+              </Text>
+            </TouchableOpacity>
+          ))}
 
           {/* Location */}
           <Text style={styles.sectionTitle}>Localização</Text>
           <View style={styles.mapContainer}>
             <View style={styles.mapPlaceholder}>
               <Text style={styles.mapText}>Mapa da localização</Text>
-              <Text style={styles.mapSubtext}>Bauru Tenis Clube</Text>
+              <Text style={styles.mapSubtext}>{dataMoradia?.localizacao || 'Endereço não informado'}</Text>
             </View>
           </View>
         </View>
