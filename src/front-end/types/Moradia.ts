@@ -3,8 +3,11 @@ export default interface Moradia {
     nome: string
     descricao: string
     endereco: string
-    vacancies: number
-    residents: number
-    price: number
-    image: string
+    regras: string[]
+    dono: {
+        id: number
+        nome: string
+        email: string
+    }
+    comodidades: string[]
 }

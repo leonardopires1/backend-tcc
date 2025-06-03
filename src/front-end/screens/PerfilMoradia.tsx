@@ -8,30 +8,34 @@ import {
   StyleSheet,
   SafeAreaView,
 } from 'react-native';
+import Moradia from '../types/Moradia';
+import { Ionicons } from '@expo/vector-icons';
+import { useRoute } from '@react-navigation/native';
 
-export default function PerfilMoradia() {
+export default function PerfilMoradia({ route, navigation }: { route: any, navigation: any }) {
+  const { id } = route.params;
+  console.log(id);
+
   useEffect(() => {
     const fetchData = async () => {
-      const id = 1;
-      const res = await fetch(`${process.env.API_URL}/moradias/${id}`)
-      const data = await res.json();
+      const res = await fetch(`http://192.168.0.22:3000/moradias/${id}`);
+      const data = await res.json(); // nome, descricao, endereco, dono, regras, comodidades
       setDataMoradia(data);
     };
     
     fetchData();
   }, []);
+  
+  const [dataMoradia, setDataMoradia] = useState<Moradia | undefined>()
 
-  const [dataMoradia, setDataMoradia] = useState<any>()
-  const [expandedRoom1, setExpandedRoom1] = useState(false);
-  const [expandedRoom2, setExpandedRoom2] = useState(false);
-
+  console.log(dataMoradia);
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton}>
-            <Text style={styles.backArrow}>‹</Text>
+            <Ionicons onPress={() => navigation.navigate("BuscarMoradia")} name="chevron-back" size={24} color="black" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Ver outras repúblicas</Text>
           <TouchableOpacity style={styles.heartButton}>
@@ -42,7 +46,7 @@ export default function PerfilMoradia() {
         {/* Hero Image */}
         <View style={styles.imageContainer}>
           <Image
-            source={require('../assets/images/casa.jpeg')}
+            source={require('../assets/01.jpg')} // Using require for image source
             style={styles.heroImage}
             resizeMode="cover"
           />
@@ -54,29 +58,18 @@ export default function PerfilMoradia() {
           <Text style={styles.title}>{dataMoradia?.nome || 'Nome da República'}</Text>
           <Text style={styles.subtitle}>{dataMoradia?.descricao || 'Descrição da república'}</Text>
 
-          {/* Rating */}
-          <View style={styles.ratingContainer}>
-            <Text style={styles.rating}>{dataMoradia?.nota ? dataMoradia.nota.toFixed(2) : '--'}</Text>
-            <Text style={styles.ratingText}>{dataMoradia?.ranking ? `${dataMoradia.ranking}° maior nota da cidade!` : ''}</Text>
-          </View>
-
           {/* Administrator */}
           <View style={styles.adminContainer}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
-                {dataMoradia?.administrador?.nome
-                  ? dataMoradia.administrador.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase()
+                {dataMoradia?.dono?.nome
+                  ? dataMoradia.dono.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase()
                   : 'AB'}
               </Text>
             </View>
             <View style={styles.adminInfo}>
               <Text style={styles.adminName}>
-                Administrador: {dataMoradia?.administrador?.nome || 'Nome do Administrador'}
-              </Text>
-              <Text style={styles.adminTime}>
-                {dataMoradia?.administrador?.tempoMoradia
-                  ? `morador há ${dataMoradia.administrador.tempoMoradia}`
-                  : ''}
+                Proprietário: {dataMoradia?.dono?.nome || 'Nome do dono'}
               </Text>
             </View>
           </View>
@@ -92,32 +85,13 @@ export default function PerfilMoradia() {
             </View>
           ))}
 
-          {/* Available Rooms */}
-          <Text style={styles.sectionTitle}>Vagas disponíveis</Text>
-          {dataMoradia?.quartos?.map((quarto: any, idx: number) => (
-            <TouchableOpacity
-              style={styles.roomItem}
-              key={idx}
-              onPress={() => {
-                if (idx === 0) setExpandedRoom1(!expandedRoom1);
-                if (idx === 1) setExpandedRoom2(!expandedRoom2);
-              }}
-            >
-              <Text style={styles.roomText}>
-                {quarto.tipo}, {quarto.banheiro}
-              </Text>
-              <Text style={styles.chevron}>
-                {(idx === 0 && expandedRoom1) || (idx === 1 && expandedRoom2) ? '⌄' : '›'}
-              </Text>
-            </TouchableOpacity>
-          ))}
 
           {/* Location */}
           <Text style={styles.sectionTitle}>Localização</Text>
           <View style={styles.mapContainer}>
             <View style={styles.mapPlaceholder}>
               <Text style={styles.mapText}>Mapa da localização</Text>
-              <Text style={styles.mapSubtext}>{dataMoradia?.localizacao || 'Endereço não informado'}</Text>
+              <Text style={styles.mapSubtext}>{dataMoradia?.endereco || 'Endereço não informado'}</Text>
             </View>
           </View>
         </View>

@@ -2,7 +2,6 @@ import { Image, StyleSheet, Text, View } from "react-native";
 import Moradia from "../types/Moradia";
 
 export default function MoradiaCard({ moradia }: { moradia: Moradia }) {
-  console.log(moradia);
   return (
     <View key={moradia.id} style={styles.moradiaCard}>
       <Image

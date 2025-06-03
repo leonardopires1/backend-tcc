@@ -7,8 +7,7 @@ export default function FetchMoradias() {
   useEffect(() => {
     const fetchMoradias = async () => {
       try {
-        //const response = await fetch(`${process.env.API_URL}/moradias/`);
-        const response = await fetch("http://10.153.0.117:3000/moradias/"); // Replace with your actual API URL
+        const response = await fetch("http://192.168.0.22:3000/moradias/"); 
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }

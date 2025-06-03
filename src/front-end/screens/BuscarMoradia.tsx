@@ -1,14 +1,22 @@
-import { SafeAreaView, StyleSheet, View, Text, Image, ScrollView, TouchableOpacity, StatusBar } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
-import MapView, { Marker } from "react-native-maps"
-import React, { useEffect, useState } from "react"
-import Moradia from "../types/Moradia"
-import MoradiaCard from "../components/moradiaCard"
-import FetchMoradias from "../api/Moradias"
+import {
+  SafeAreaView,
+  StyleSheet,
+  View,
+  Text,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  StatusBar,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import MapView, { Marker } from "react-native-maps";
+import React, { useEffect, useState } from "react";
+import Moradia from "../types/Moradia";
+import MoradiaCard from "../components/moradiaCard";
+import FetchMoradias from "../api/Moradias";
 
-export default function BuscarMoradia() {
-
-  const Moradias: Moradia[] = FetchMoradias()
+export default function BuscarMoradia({ navigation }: { navigation: any }) {
+  const Moradias: Moradia[] = FetchMoradias();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -17,7 +25,12 @@ export default function BuscarMoradia() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton}>
-          <Ionicons name="chevron-back" size={24} color="black" />
+          <Ionicons
+            onPress={() => navigation.navigate("Home")}
+            name="chevron-back"
+            size={24}
+            color="black"
+          />
         </TouchableOpacity>
         <View style={styles.locationContainer}>
           <Text style={styles.locationText}>Bauru, SP</Text>
@@ -39,25 +52,49 @@ export default function BuscarMoradia() {
               longitudeDelta: 0.0421,
             }}
           >
-            <Marker coordinate={{ latitude: -22.3156, longitude: -49.0709 }} title="Tenda Atacado - Bauru" />
-            <Marker coordinate={{ latitude: -22.32, longitude: -49.0709 }} title="Graal Sem Limites">
+            <Marker
+              coordinate={{ latitude: -22.3156, longitude: -49.0709 }}
+              title="Tenda Atacado - Bauru"
+            />
+            <Marker
+              coordinate={{ latitude: -22.32, longitude: -49.0709 }}
+              title="Graal Sem Limites"
+            >
               <View style={styles.customMarker}>
-                <Image source={{ uri: "https://via.placeholder.com/20" }} style={styles.markerImage} />
+                <Image
+                  source={{ uri: "https://via.placeholder.com/20" }}
+                  style={styles.markerImage}
+                />
               </View>
             </Marker>
           </MapView>
         </View>
 
         <View style={styles.titleContainer}>
-          <Text style={styles.titleText}>Mais de dez repúblicas com vagas</Text>
+          {Moradias.length > 0 ? (
+            <Text style={styles.titleText}>
+              Encontramos {Moradias.length} repúblicas
+            </Text>
+          ) : (
+            <Text style={styles.titleText}>
+              Mais de dez repúblicas com vagas
+            </Text>
+          )}
         </View>
 
         {Moradias.map((moradia) => (
-          <MoradiaCard key={moradia.id} moradia={moradia} />
+          <TouchableOpacity
+            key={moradia.id}
+            onPress={() =>
+              navigation.navigate("PerfilMoradia", { id: moradia.id })
+            }
+          >
+            <MoradiaCard key={moradia.id} moradia={moradia} />
+          </TouchableOpacity>
         ))}
       </ScrollView>
     </SafeAreaView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -183,5 +220,4 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
   },
-
-})
+});

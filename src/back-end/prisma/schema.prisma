@@ -37,6 +37,7 @@ model Moradia {
   tarefas   Tarefa[]
   despesas  Despesa[]
   regrasMoradia RegrasMoradia[]
+  comodidades Comodidades[]
 }
 
 model Tarefa {
@@ -49,8 +50,6 @@ model Tarefa {
   moradiaId   Int
   atribuicoes AtribuicaoTarefa[]
 }
-
-
 
 model Despesa {
   id         Int              @id @default(autoincrement())
@@ -99,4 +98,12 @@ model RegrasMoradia {
   moradiaId   Int
   regra       Regras   @relation(fields: [regraId], references: [id])
   regraId     Int
+}
+
+model Comodidades {
+  id          Int      @id @default(autoincrement())
+  nome        String
+  descricao   String?
+  moradia     Moradia  @relation(fields: [moradiaId], references: [id])
+  moradiaId   Int
 }

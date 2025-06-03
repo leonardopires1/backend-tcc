@@ -1,20 +1,24 @@
 export class CreateMoradiaDto {
   nome: string;
-  endereco?: string;
+  endereco: string;
   donoId: number;
-  moradoresIds: number[];
-  tarefas: {
+  moradoresIds?: number[];
+  tarefas?: {
     nome: string;
     descricao?: string;
     recorrencia: string;
   }[];
-  despesas: {
+  despesas?: {
     nome: string;
     valorTotal: number;
     vencimento: Date;
     tipo?: string;
   }[];
-  regras: {
+  regras?: {
     id: number[];
-  }
+  };
+  comodidades?: {
+    nome: string;
+    descricao?: string;
+  }[];
 }
