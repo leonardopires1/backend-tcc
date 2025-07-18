@@ -26,12 +26,12 @@ export class RegraMoradiaService {
     });
   }
 
-  registerRegraMoradia(idMoradia: number, idRegra: number) {
-    return this.prisma.regrasMoradia.create({
-      data: {
+  registerRegraMoradia(idMoradia: number, idRegra: number[]) {
+    return this.prisma.regrasMoradia.createMany({
+      data: idRegra.map((regraId) => ({
         moradiaId: idMoradia,
-        regraId: idRegra,
-      },
+        regraId: regraId,
+      })),
     });
   }
 
@@ -40,6 +40,14 @@ export class RegraMoradiaService {
       where: {
         moradiaId: idMoradia,
         regraId: idRegra,
+      },
+    });
+  }
+
+  deleteRegraMoradiaByMoradiaId(idMoradia: number) {
+    return this.prisma.regrasMoradia.deleteMany({
+      where: {
+        moradiaId: idMoradia,
       },
     });
   }

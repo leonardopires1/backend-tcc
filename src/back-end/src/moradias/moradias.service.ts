@@ -9,11 +9,17 @@ import { CreateMoradiaDto } from './dto/create-moradia.dto';
 import { UpdateMoradiaDto } from './dto/update-moradia.dto';
 import { PrismaService } from 'src/database/prisma.service';
 import { Prisma } from '@prisma/client';
+import { RegraMoradiaService } from 'src/regra-moradia/regra-moradia.service';
+import { ComodidadesMoradiaService } from 'src/comodidades-moradia/comodidades-moradia.service';
 
 @Injectable()
 export class MoradiasService {
   @Inject()
   private readonly prisma: PrismaService;
+  @Inject()
+  private readonly regrasMoradiaService: RegraMoradiaService;
+  @Inject()
+  private readonly comodidadesMoradiaService: ComodidadesMoradiaService;
 
   async create(createMoradiaDto: CreateMoradiaDto) {
     const {
@@ -24,7 +30,7 @@ export class MoradiasService {
       tarefas = [],
       despesas = [],
       regras = { id: [] },
-      comodidades = [],
+      comodidades = [{ nome: '', descricao: '' }],
     } = createMoradiaDto;
 
     // Verifica se o dono existe
@@ -85,7 +91,26 @@ export class MoradiasService {
             descricao: comodidade.descricao,
           })),
         },
-    }});
+      },
+    });
+
+    if (regras.id.length > 0) {
+      await this.regrasMoradiaService.registerRegraMoradia(
+        novaMoradia.id,
+        regras.id,
+      );
+    }
+
+    if (comodidades.length > 0) {
+      await Promise.all(
+        comodidades.map((comodidade) =>
+          this.comodidadesMoradiaService.addComodidadeToMoradia(
+            novaMoradia.id,
+            { nome: comodidade.nome, descricao: comodidade.descricao || '' }
+          )
+        )
+      );
+    }
 
     // Atualiza os usuários para vinculá-los à nova moradia
     await Promise.all(
@@ -107,7 +132,7 @@ export class MoradiasService {
       select: {
         id: true,
         nome: true,
-        descricao: true, 
+        descricao: true,
         endereco: true,
         dono: { select: { id: true, nome: true, email: true } },
       },
@@ -123,6 +148,7 @@ export class MoradiasService {
         endereco: true,
         descricao: true,
         regrasMoradia: true,
+        comodidades: true,
         dono: { select: { id: true, nome: true, email: true } },
       },
     });
@@ -176,6 +202,10 @@ export class MoradiasService {
             moradiaId: id,
           },
         });
+
+        await this.regrasMoradiaService.deleteRegraMoradiaByMoradiaId(id);
+
+        await this.comodidadesMoradiaService.removeComodidadeFromMoradiaByMoradiaId(id);
 
         // Por fim, exclui a moradia
         return prisma.moradia.delete({
