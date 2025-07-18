@@ -17,6 +17,6 @@ export class RegrasMoradiaController {
 
     @Post('register/:idMoradia/:idRegra')
     async registerRegraMoradia(@Param('idMoradia') idMoradia: number, @Param('idRegra') idRegra: number) {
-        return await this.regraMoradiaService.registerRegraMoradia(idMoradia, idRegra);
+        return await this.regraMoradiaService.registerRegraMoradia(idMoradia, [idRegra]);
     }
 }

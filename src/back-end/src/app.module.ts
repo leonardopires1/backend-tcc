@@ -4,7 +4,6 @@ import { AuthModule } from './auth/auth.module';
 import { DatabaseModule } from './database/database.module';
 import { MoradiasModule } from './moradias/moradias.module';
 import { RegraMoradiaModule } from './regra-moradia/regra-moradia.module';
-import { RegrasMoradiaController } from './regra-moradia/regra-moradia.controller';
 import { ComodidadesMoradiaModule } from './comodidades-moradia/comodidades-moradia.module';
 
 @Module({
@@ -14,9 +13,7 @@ import { ComodidadesMoradiaModule } from './comodidades-moradia/comodidades-mora
     DatabaseModule,
     MoradiasModule,
     RegraMoradiaModule,
-    ComodidadesMoradiaModule,
-    ComodidadesMoradiaModule,
+    ComodidadesMoradiaModule
   ],
-  controllers: [RegrasMoradiaController],
 })
 export class AppModule {}
