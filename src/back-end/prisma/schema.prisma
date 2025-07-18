@@ -22,6 +22,8 @@ model Usuario {
   despesasUsuario    DespesaUsuario[]
   moradiaDono    Moradia? @relation("Donomoradia") // Relacionamento inverso para dono da moradia
   moradias      Moradia[] @relation("Moradores") // Relacionamento inverso para moradores
+  resetToken  String?  
+  resetTokenExp DateTime?
 }
 
 model Moradia {
@@ -87,7 +89,7 @@ model DespesaUsuario {
 
 model Regras {
   id          Int      @id @default(autoincrement())
-  tituko        String
+  titulo        String
   descricao   String?
   regrasMoradia RegrasMoradia[]
 }
@@ -105,5 +107,5 @@ model Comodidades {
   nome        String
   descricao   String?
   moradia     Moradia  @relation(fields: [moradiaId], references: [id])
-  moradiaId   Int
+  moradiaId   Int    
 }

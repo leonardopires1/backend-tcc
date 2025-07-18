@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import Moradia from '../types/Moradia';
 import { Ionicons } from '@expo/vector-icons';
-import { useRoute } from '@react-navigation/native';
 
 export default function PerfilMoradia({ route, navigation }: { route: any, navigation: any }) {
   const { id } = route.params;
@@ -18,7 +17,7 @@ export default function PerfilMoradia({ route, navigation }: { route: any, navig
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await fetch(`http://192.168.0.22:3000/moradias/${id}`);
+      const res = await fetch(`${process.env.API_URL}/moradias/${id}`);
       const data = await res.json(); // nome, descricao, endereco, dono, regras, comodidades
       setDataMoradia(data);
     };

@@ -33,7 +33,7 @@ const App = () => {
   return (
     <NavigationContainer>
       {userToken ? (
-        <Stack.Navigator initialRouteName="BuscarMoradia">
+        <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Home" component={Home} />
           <Stack.Screen name="Cadastro" component={Cadastro} options={{ title: '', headerTransparent: true, headerShown: false }} />
           <Stack.Screen name="Login" component={Login} options={{ title: '', headerTransparent: true, headerShown: false }} />
@@ -45,7 +45,7 @@ const App = () => {
         </Stack.Navigator>
       ) : (
         <>
-          <Stack.Navigator initialRouteName="BuscarMoradia">
+          <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
             <Stack.Screen name="Cadastro" component={Cadastro} options={{ title: '', headerTransparent: true, headerShown: false }} />
             <Stack.Screen name="Login" component={Login} options={{ title: '', headerTransparent: true, headerShown: false }} />
             <Stack.Screen name="Home" component={Home} />
