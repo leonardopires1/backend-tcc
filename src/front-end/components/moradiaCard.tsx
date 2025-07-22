@@ -1,87 +1,186 @@
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import { Ionicons } from '@expo/vector-icons';
 import Moradia from "../types/Moradia";
 
-export default function MoradiaCard({ moradia }: { moradia: Moradia }) {
-  return (
-    <View key={moradia.id} style={styles.moradiaCard}>
-      <Image
-      source={{
-        uri: "../assets/svgs/icon.svg",
-      }}
-      style={styles.moradiaImage}
-      resizeMode="cover"
-      />
-      <View style={styles.moradiaInfo}>
-      <Text style={styles.moradiaName}>{moradia.nome || "Nome não disponível"}</Text>
-      <Text style={styles.moradiaDescription}>{moradia.descricao || "Descrição não disponível"}</Text>
-      <Text style={styles.moradiaName}>Endereço</Text>
-      <Text style={styles.moradiaDescription}>{moradia.endereco || "Endereço não disponível"}</Text>
+interface MoradiaCardProps {
+  moradia: Moradia;
+  onPress?: () => void;
+  showFavorite?: boolean;
+  isFavorite?: boolean;
+  onFavoriteToggle?: () => void;
+}
+
+export default function MoradiaCard({ 
+  moradia, 
+  onPress, 
+  showFavorite = false,
+  isFavorite = false,
+  onFavoriteToggle 
+}: MoradiaCardProps) {
+  const renderAmenities = () => {
+    if (!moradia.comodidades || moradia.comodidades.length === 0) {
+      return null;
+    }
+
+    const displayedAmenities = moradia.comodidades.slice(0, 3);
+    const remainingCount = moradia.comodidades.length - 3;
+
+    return (
+      <View style={styles.amenitiesContainer}>
+        {displayedAmenities.map((comodidade, index) => (
+          <View key={index} style={styles.amenityTag}>
+            <Text style={styles.amenityText}>{comodidade}</Text>
+          </View>
+        ))}
+        {remainingCount > 0 && (
+          <Text style={styles.moreAmenities}>+{remainingCount} mais</Text>
+        )}
       </View>
-    </View>)
+    );
+  };
+
+  return (
+    <TouchableOpacity style={styles.container} onPress={onPress}>
+      <View style={styles.imageContainer}>
+        <Image
+          source={{ uri: moradia.imagens?.[0] || 'https://via.placeholder.com/300x200' }}
+          style={styles.image}
+          resizeMode="cover"
+        />
+        {showFavorite && (
+          <TouchableOpacity 
+            style={styles.favoriteButton}
+            onPress={onFavoriteToggle}
+          >
+            <Ionicons
+              name={isFavorite ? "heart" : "heart-outline"}
+              size={24}
+              color={isFavorite ? "#FF4757" : "#FFF"}
+            />
+          </TouchableOpacity>
+        )}
+      </View>
+      
+      <View style={styles.content}>
+        <Text style={styles.title} numberOfLines={1}>
+          {moradia.nome}
+        </Text>
+        
+        <View style={styles.locationContainer}>
+          <Ionicons name="location-outline" size={16} color="#666" />
+          <Text style={styles.location} numberOfLines={1}>
+            {moradia.endereco}
+          </Text>
+        </View>
+        
+        <Text style={styles.description} numberOfLines={2}>
+          {moradia.descricao}
+        </Text>
+        
+        {renderAmenities()}
+        
+        <View style={styles.priceContainer}>
+          <Text style={styles.price}>
+            R$ {moradia.preco?.toLocaleString('pt-BR') || '0'}/mês
+          </Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
 }
 
 const styles = StyleSheet.create({
-  moradiaCard: {
-    flexDirection: "row",
+  container: {
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    overflow: 'hidden',
+  },
+  imageContainer: {
+    position: 'relative',
+    height: 200,
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  favoriteButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  content: {
     padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
   },
-  moradiaImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 8,
-  },
-  moradiaInfo: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  moradiaName: {
+  title: {
     fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 4,
-  },
-  moradiaDescription: {
-    fontSize: 14,
-    color: "#666",
+    fontWeight: 'bold',
+    color: '#333',
     marginBottom: 8,
   },
-  ratingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 4,
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
   },
-  ratingText: {
-    fontSize: 16,
-    fontWeight: "bold",
+  location: {
+    fontSize: 14,
+    color: '#666',
     marginLeft: 4,
+    flex: 1,
   },
-  vacanciesText: {
+  description: {
     fontSize: 14,
-    marginBottom: 2,
+    color: '#666',
+    lineHeight: 20,
+    marginBottom: 12,
   },
-  residentsText: {
-    fontSize: 14,
-    marginBottom: 8,
+  amenitiesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  amenityTag: {
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 6,
+    marginBottom: 4,
+  },
+  amenityText: {
+    fontSize: 11,
+    color: '#0073FF',
+    fontWeight: '500',
+  },
+  moreAmenities: {
+    fontSize: 11,
+    color: '#666',
+    fontStyle: 'italic',
   },
   priceContainer: {
-    alignItems: "flex-start",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  priceLabel: {
-    fontSize: 12,
-    color: "#666",
+  price: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#0073FF',
   },
-  priceWrapper: {
-    flexDirection: "row",
-    alignItems: "baseline",
-  },
-  priceCurrency: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  priceValue: {
-    fontSize: 24,
-    fontWeight: "bold",
-  },
-
-})
+});

@@ -3,20 +3,46 @@ import {
   StyleSheet,
   View,
   Text,
-  Image,
   ScrollView,
   TouchableOpacity,
   StatusBar,
+  RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import MapView, { Marker } from "react-native-maps";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Moradia from "../types/Moradia";
-import MoradiaCard from "../components/moradiaCard";
-import FetchMoradias from "../api/Moradias";
+import MoradiaCard from "../components/MoradiaCard";
+import { useMoradias } from "../hooks/useMoradias";
+import { Loading } from "../components/common/Loading";
+import { ErrorMessage } from "../components/common/ErrorMessage";
 
 export default function BuscarMoradia({ navigation }: { navigation: any }) {
-  const Moradias: Moradia[] = FetchMoradias();
+  const { moradias, loading, error, refreshMoradias } = useMoradias();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refreshMoradias();
+    setRefreshing(false);
+  };
+
+  const handleMoradiaPress = (moradia: Moradia) => {
+    navigation.navigate("PerfilMoradia", { moradia });
+  };
+
+  if (loading && !refreshing) {
+    return <Loading text="Carregando moradias..." />;
+  }
+
+  if (error && moradias.length === 0) {
+    return (
+      <ErrorMessage 
+        message={error} 
+        onRetry={refreshMoradias}
+      />
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -40,7 +66,12 @@ export default function BuscarMoradia({ navigation }: { navigation: any }) {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scrollView}>
+      <ScrollView 
+        style={styles.scrollView}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         {/* Map View */}
         <View style={styles.mapContainer}>
           <MapView
@@ -54,43 +85,41 @@ export default function BuscarMoradia({ navigation }: { navigation: any }) {
           >
             <Marker
               coordinate={{ latitude: -22.3156, longitude: -49.0709 }}
-              title="Tenda Atacado - Bauru"
+              title="Bauru Centro"
             />
-            <Marker
-              coordinate={{ latitude: -22.32, longitude: -49.0709 }}
-              title="Graal Sem Limites"
-            >
-              <View style={styles.customMarker}>
-                <Image
-                  source={{ uri: "https://via.placeholder.com/20" }}
-                  style={styles.markerImage}
-                />
-              </View>
-            </Marker>
+            {moradias.map((moradia, index) => (
+              <Marker
+                key={moradia.id}
+                coordinate={{ 
+                  latitude: -22.3156 + (index * 0.001), // Simular posições diferentes
+                  longitude: -49.0709 + (index * 0.001) 
+                }}
+                title={moradia.nome}
+                description={moradia.endereco}
+                onCalloutPress={() => handleMoradiaPress(moradia)}
+              />
+            ))}
           </MapView>
         </View>
 
         <View style={styles.titleContainer}>
-          {Moradias.length > 0 ? (
+          {moradias.length > 0 ? (
             <Text style={styles.titleText}>
-              Encontramos {Moradias.length} repúblicas
+              Encontramos {moradias.length} repúblicas
             </Text>
           ) : (
             <Text style={styles.titleText}>
-              Mais de dez repúblicas com vagas
+              Nenhuma república encontrada
             </Text>
           )}
         </View>
 
-        {Moradias.map((moradia) => (
-          <TouchableOpacity
-            key={moradia.id}
-            onPress={() =>
-              navigation.navigate("PerfilMoradia", { id: moradia.id })
-            }
-          >
-            <MoradiaCard key={moradia.id} moradia={moradia} />
-          </TouchableOpacity>
+        {moradias.map((moradia: Moradia) => (
+          <MoradiaCard 
+            key={moradia.id} 
+            moradia={moradia} 
+            onPress={() => handleMoradiaPress(moradia)}
+          />
         ))}
       </ScrollView>
     </SafeAreaView>
