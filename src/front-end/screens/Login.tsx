@@ -5,18 +5,60 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import Checkbox from "expo-checkbox";
-import requisitaLogin from "../api/Login";
+import { useAuth } from "../contexts/AuthContext";
+import { Loading } from "../components/common/Loading";
 
 export default function Login({ navigation }: { navigation: any }) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [manterConectado, setManterConectado] = useState(false);
+  const [loading, setLoading] = useState(false);
+  
+  const { login } = useAuth();
+
+  const handleLogin = async () => {
+    if (!email.trim() || !senha.trim()) {
+      Alert.alert("Erro", "Por favor, preencha todos os campos.");
+      return;
+    }
+
+    // Validação de email simples
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert("Erro", "Por favor, insira um email válido.");
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      const result = await login(email, senha);
+      
+      if (result.success) {
+        Alert.alert("Sucesso", "Login realizado com sucesso!");
+        // A navegação será automática devido ao contexto de autenticação
+      } else {
+        Alert.alert("Erro", result.message || "Falha no login");
+      }
+    } catch (error) {
+      Alert.alert("Erro", "Erro inesperado. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <View style={styles.container}>
-      {/* Card de login */}
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      {loading && <Loading overlay text="Fazendo login..." />}
+      
       <View style={styles.card}>
         <Text style={styles.welcome}>Bem-Vindo</Text>
 
@@ -26,6 +68,9 @@ export default function Login({ navigation }: { navigation: any }) {
           placeholderTextColor="#999"
           value={email}
           onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          editable={!loading}
         />
 
         <TextInput
@@ -35,6 +80,7 @@ export default function Login({ navigation }: { navigation: any }) {
           secureTextEntry
           value={senha}
           onChangeText={setSenha}
+          editable={!loading}
         />
 
         <View style={styles.row}>
@@ -43,29 +89,37 @@ export default function Login({ navigation }: { navigation: any }) {
               value={manterConectado}
               onValueChange={setManterConectado}
               color={manterConectado ? "#0073FF" : undefined}
+              disabled={loading}
             />
             <Text style={styles.checkboxLabel}>Continuar conectado</Text>
           </View>
 
-          <TouchableOpacity>
+          <TouchableOpacity disabled={loading}>
             <Text style={styles.forgotText}>Esqueceu a senha</Text>
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity
-          style={styles.button}
-          onPress={() => requisitaLogin(email, senha, manterConectado, navigation)}
+          style={[styles.button, loading && styles.buttonDisabled]}
+          onPress={handleLogin}
+          disabled={loading}
         >
-          <Text style={styles.buttonText}>entrar</Text>
+          <Text style={styles.buttonText}>
+            {loading ? "Entrando..." : "Entrar"}
+          </Text>
         </TouchableOpacity>
 
         <Text style={styles.registerText}>
-          Nao tem conta?{" "}
-          
-            <Text onPress={() => navigation.navigate("Cadastro")} style={styles.forgotText}>crie sua conta aqui</Text>
+          Não tem conta?{" "}
+          <Text 
+            onPress={() => !loading && navigation.navigate("Cadastro")} 
+            style={[styles.forgotText, loading && styles.linkDisabled]}
+          >
+            crie sua conta aqui
+          </Text>
         </Text>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -76,54 +130,37 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  header: {
-    alignItems: "center",
-    marginBottom: 30,
-  },
-  logo: {
-    resizeMode: "center",
-    width: 300,
-    marginBottom: 10,
-  },
-  appName: {
-    color: "white",
-    fontSize: 24,
-    fontWeight: "bold",
-  },
   card: {
-    display: "flex",
-    justifyContent: "space-around",
     backgroundColor: "white",
     borderRadius: 20,
     padding: 25,
     width: "90%",
     minHeight: 400,
-    alignItems: "stretch",
+    justifyContent: "space-around",
     shadowColor: "#000",
-    shadowOpacity: 0.5, // sombra mais visível
     shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
     shadowRadius: 10,
-    elevation: 8, // aumenta a sombra no Android
+    elevation: 10,
   },
   welcome: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#0073FF",
     textAlign: "center",
-    marginBottom: 25,
+    color: "#333",
+    marginBottom: 20,
   },
   input: {
     backgroundColor: "#F1F1F1",
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderRadius: 6,
-    marginBottom: 15,
+    borderRadius: 15,
+    padding: 15,
     fontSize: 16,
-    shadowColor: "black",
-    shadowOpacity: 0.2,
+    marginBottom: 15,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
   },
   row: {
     flexDirection: "row",
@@ -136,38 +173,41 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   checkboxLabel: {
-    marginLeft: 6,
+    marginLeft: 8,
     fontSize: 14,
+    color: "#666",
   },
   forgotText: {
-    fontSize: 13,
     color: "#0073FF",
-    textDecorationLine: "none",
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  linkDisabled: {
+    color: "#999",
   },
   button: {
     backgroundColor: "#0073FF",
-    paddingVertical: 14,
-    borderRadius: 10,
+    borderRadius: 15,
+    padding: 18,
     alignItems: "center",
-    marginBottom: 15,
-    shadowColor: "black",
-    shadowOpacity: 0.25,
-    shadowOffset: { width: 0, height: 3 },
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
     shadowRadius: 6,
-    elevation: 5,
+    elevation: 4,
+  },
+  buttonDisabled: {
+    backgroundColor: "#999",
   },
   buttonText: {
-    color: "#fff",
-    fontWeight: "bold",
+    color: "white",
     fontSize: 18,
+    fontWeight: "bold",
   },
   registerText: {
-    fontSize: 13,
     textAlign: "center",
-  },
-  link: {
-    textDecorationLine: "underline",
-    fontWeight: "500",
+    fontSize: 14,
+    color: "#666",
   },
 });

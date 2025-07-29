@@ -51,7 +51,7 @@ export default function Cadastro({ navigation }: { navigation: any }) {
     senha: commonValidationRules.password,
     confirmarSenha: commonValidationRules.confirmPassword(formData.senha),
     cpf: commonValidationRules.cpf,
-    genero: [{ required: true, message: "Por favor, selecione um gênero" }],
+    genero: commonValidationRules.required,
     telefone: commonValidationRules.phone,
   };
 
@@ -104,17 +104,7 @@ export default function Cadastro({ navigation }: { navigation: any }) {
     setLoading(true);
 
     try {
-      // Preparar dados para envio (removendo formatação)
-      const dataToSend = {
-        ...formData,
-        cpf: formData.cpf.replace(/\D/g, ''), // Remove formatação do CPF
-        telefone: formData.telefone.replace(/\D/g, ''), // Remove formatação do telefone
-        genero: formData.genero.charAt(0).toUpperCase() + formData.genero.slice(1) // Capitaliza primeira letra
-      };
-      
-      console.log('Dados sendo enviados:', dataToSend);
-      
-      const result = await register(dataToSend);
+      const result = await register(formData);
       
       if (result.success) {
         Alert.alert(
@@ -140,8 +130,8 @@ export default function Cadastro({ navigation }: { navigation: any }) {
   const genderOptions = [
     { label: "Masculino", value: "masculino" },
     { label: "Feminino", value: "feminino" },
-    { label: "Não-binário", value: "não-binário" },
     { label: "Outro", value: "outro" },
+    { label: "Prefiro não informar", value: "nao_informar" },
   ];
 
   return (
