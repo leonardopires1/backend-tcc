@@ -1,6 +1,6 @@
 const API_CONFIG = {
   BASE_URL: __DEV__ 
-    ? 'http://192.168.0.22:3000'  // IP local para desenvolvimento
+    ? 'http://192.168.217.124:3000'  // IP local para desenvolvimento
     : 'https://your-production-api.com', // URL de produção
   
   ENDPOINTS: {
@@ -28,7 +28,7 @@ const API_CONFIG = {
     },
   },
   
-  TIMEOUT: 10000, // 10 segundos
+  TIMEOUT: 15000, // 15 segundos (aumentado para evitar timeouts prematuros)
 };
 
 export default API_CONFIG;

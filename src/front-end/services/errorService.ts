@@ -76,12 +76,31 @@ export const safeExecute = async <T>(
 ): Promise<T | undefined> => {
   try {
     return await fn();
-  } catch (error) {
-    console.warn('Safe execute caught error:', error);
-    logError('Safe Execute', error);
+  } catch (error: any) {
+    // Tratamento específico para diferentes tipos de erro
+    let errorMessage = 'Erro desconhecido';
+    
+    if (error.name === 'AbortError') {
+      errorMessage = 'Requisição cancelada (timeout)';
+      console.warn('🚫 Request aborted:', error.message);
+    } else if (error.message?.includes('Network request failed')) {
+      errorMessage = 'Erro de conectividade';
+      console.warn('🌐 Network error:', error.message);
+    } else if (error.message?.includes('JSON')) {
+      errorMessage = 'Erro de formato de dados';
+      console.warn('📄 JSON parsing error:', error.message);
+    } else {
+      console.warn('⚠️ Safe execute caught error:', error.message || error);
+    }
+    
+    logError('Safe Execute', { 
+      error: error.message || error.toString(),
+      type: error.name || 'Unknown',
+      stack: error.stack 
+    });
     
     if (showError) {
-      showUserFriendlyError();
+      showUserFriendlyError(errorMessage);
     }
     
     return fallback;

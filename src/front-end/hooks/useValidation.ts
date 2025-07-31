@@ -1,6 +1,42 @@
 import { useState, useCallback } from 'react';
 import { ERROR_MESSAGES, APP_CONFIG } from '../constants';
 
+// Funções auxiliares para validação de CPF
+function validateCPFFormat(value: string): boolean {
+  // aceita 000.000.000-00 ou 00000000000
+  return /^(?:\d{3}\.\d{3}\.\d{3}-\d{2}|\d{11})$/.test(value);
+}
+
+function isAllSameDigits(cpf: string): boolean {
+  return /^(\d)\1{10}$/.test(cpf);
+}
+
+function computeCheckDigit(cpf: string, factorStart: number): number {
+  let sum = 0;
+  const length = factorStart - 1; // para primeiro dígito 9, para segundo 10
+  for (let i = 0; i < length; i++) {
+    sum += parseInt(cpf.charAt(i), 10) * (factorStart - i);
+  }
+  const digit = (sum * 10) % 11;
+  return digit === 10 ? 0 : digit;
+}
+
+export function validateCPF(value: string): string | null {
+  if (!value || typeof value !== 'string') return 'CPF inválido';
+
+  const cleaned = value.replace(/\D/g, '').trim();
+  if (cleaned.length !== 11) return 'CPF deve ter 11 dígitos';
+  if (isAllSameDigits(cleaned)) return 'CPF inválido';
+
+  const firstVerif = computeCheckDigit(cleaned, 10); // pesa 10..2 sobre os 9 primeiros
+  if (firstVerif !== parseInt(cleaned.charAt(9), 10)) return 'CPF inválido';
+
+  const secondVerif = computeCheckDigit(cleaned, 11); // pesa 11..2 sobre os 10 primeiros
+  if (secondVerif !== parseInt(cleaned.charAt(10), 10)) return 'CPF inválido';
+
+  return null; // válido
+}
+
 interface ValidationRule {
   required?: boolean;
   minLength?: number;
@@ -140,11 +176,14 @@ export const commonValidationRules = {
   ],
   
   cpf: [
-    { required: true },
-    { 
-      pattern: /^\d{3}\.\d{3}\.\d{3}-\d{2}$|^\d{11}$/, 
-      message: 'CPF inválido. Use o formato 000.000.000-00 ou 00000000000' 
-    }
+    { required: true, message: 'CPF é obrigatório' },
+    {
+      pattern: /^(?:\d{3}\.\d{3}\.\d{3}-\d{2}|\d{11})$/,
+      message: 'Use o formato 000.000.000-00 ou 00000000000',
+    },
+    {
+      custom: (value: string) => validateCPF(value),
+    },
   ],
   
   phone: [
