@@ -109,10 +109,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     dispatch({ type: 'LOADING' });
 
     try {
-      const response = await HttpService.post(API_CONFIG.ENDPOINTS.AUTH.SIGNIN, {
-        email,
+      const loginData = {
+        email: email.trim().toLowerCase(),
         senha: password,
-      }, false);
+      };
+      
+      console.log('🔐 Tentando fazer login com:', { email: loginData.email, senhaLength: password.length });
+
+      const response = await HttpService.post(API_CONFIG.ENDPOINTS.AUTH.SIGNIN, loginData, false);
+
+      console.log('📡 Resposta do login:', { ok: response.ok, status: response.status, hasData: !!response.data });
 
       if (response.ok && response.data) {
         const { access_token, user } = response.data as { access_token: string; user: User };
@@ -125,16 +131,41 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           payload: { user, token: access_token } 
         });
 
+        console.log('✅ Login realizado com sucesso para:', user.email);
         return { success: true };
       } else {
         dispatch({ type: 'LOGOUT' });
+        
+        let errorMessage = 'Credenciais inválidas';
+        
+        // Se a resposta tem uma estrutura de erro de validação
+        if (response.error) {
+          const error = response.error as any;
+          if (error && typeof error === 'object') {
+            if (Array.isArray(error.message)) {
+              errorMessage = error.message.join(', ');
+            } else if (error.message) {
+              errorMessage = error.message;
+            } else {
+              errorMessage = JSON.stringify(error);
+            }
+          } else {
+            errorMessage = String(response.error);
+          }
+        }
+        
+        console.log('❌ Erro no login:', errorMessage);
+        
         return { 
           success: false, 
-          message: response.error || 'Credenciais inválidas' 
+          message: errorMessage
         };
       }
     } catch (error: any) {
       dispatch({ type: 'LOGOUT' });
+      
+      console.log('💥 Exceção no login:', error.message);
+      
       return { 
         success: false, 
         message: error.message || 'Erro ao fazer login' 

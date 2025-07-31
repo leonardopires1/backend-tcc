@@ -18,13 +18,28 @@ import {
   ApiUnauthorizedResponse,
   ApiBadRequestResponse,
 } from '@nestjs/swagger';
+import { IsEmail, IsString, IsNotEmpty } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './auth.guard';
 import { Public } from '../common/decorators/user.decorator';
 
 class SignInDto {
+  @ApiProperty({ 
+    description: 'Email do usuário',
+    example: 'usuario@email.com',
+  })
+  @IsEmail({}, { message: 'Email deve ter um formato válido' })
+  @IsNotEmpty({ message: 'Email é obrigatório' })
   email: string;
+
+  @ApiProperty({ 
+    description: 'Senha do usuário',
+    example: 'minhasenha123',
+  })
+  @IsString({ message: 'Senha deve ser uma string' })
+  @IsNotEmpty({ message: 'Senha é obrigatória' })
   senha: string;
 }
 
@@ -132,8 +147,16 @@ export class AuthController {
   @ApiResponse({ status: 429, description: 'Muitas tentativas. Tente novamente mais tarde.' })
   async signin(@Body() signInDto: SignInDto) {
     try {
+      console.log('🔐 Dados recebidos no signin:', { 
+        email: signInDto.email, 
+        senhaLength: signInDto.senha?.length || 0,
+        hasEmail: !!signInDto.email,
+        hasSenha: !!signInDto.senha 
+      });
+      
       return await this.authService.signin(signInDto);
     } catch (error) {
+      console.log('❌ Erro no signin controller:', error.message);
       if (error instanceof UnauthorizedException) {
         throw error;
       }

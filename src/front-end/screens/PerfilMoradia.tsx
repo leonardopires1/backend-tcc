@@ -10,21 +10,18 @@ import {
 } from 'react-native';
 import Moradia from '../types/Moradia';
 import { Ionicons } from '@expo/vector-icons';
+import { useMoradias } from '../hooks/useMoradias';
 
 export default function PerfilMoradia({ route, navigation }: { route: any, navigation: any }) {
   const { id } = route.params;
   console.log(id);
+  const { moradias } = useMoradias();
 
   useEffect(() => {
-    const fetchData = async () => {
-      const res = await fetch(`${process.env.API_URL}/moradias/${id}`);
-      const data = await res.json(); // nome, descricao, endereco, dono, regras, comodidades
-      setDataMoradia(data);
-    };
-    
-    fetchData();
-  }, []);
-  
+    const moradia = moradias.find((m) => m.id === id);
+    setDataMoradia(moradia);
+  }, [moradias, id]);
+
   const [dataMoradia, setDataMoradia] = useState<Moradia | undefined>()
 
   console.log(dataMoradia);
@@ -57,7 +54,7 @@ export default function PerfilMoradia({ route, navigation }: { route: any, navig
           <Text style={styles.title}>{dataMoradia?.nome || 'Nome da República'}</Text>
           <Text style={styles.subtitle}>{dataMoradia?.descricao || 'Descrição da república'}</Text>
 
-          {/* Administrator */}
+          {/* Administrator
           <View style={styles.adminContainer}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
@@ -71,7 +68,7 @@ export default function PerfilMoradia({ route, navigation }: { route: any, navig
                 Proprietário: {dataMoradia?.dono?.nome || 'Nome do dono'}
               </Text>
             </View>
-          </View>
+          </View> */}
 
           {/* Rules and Amenities */}
           <Text style={styles.sectionTitle}>Regras e comodidades</Text>

@@ -4,15 +4,9 @@ export default interface Moradia {
     descricao: string;
     endereco: string;
     criadoEm?: string;
-    dono: {
-        id: number;
-        nome: string;
-        email: string;
-    };
+    donoId: number;
     moradores?: Array<{
         id: number;
-        nome: string;
-        email: string;
     }>;
     regras?: string[];
     comodidades?: string[];

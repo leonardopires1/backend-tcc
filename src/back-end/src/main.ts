@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, BadRequestException } from '@nestjs/common';
 import helmet from 'helmet';
 import * as compression from 'compression';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -26,7 +26,18 @@ async function bootstrap() {
     whitelist: true,
     forbidNonWhitelisted: true,
     transform: true,
-    disableErrorMessages: process.env.NODE_ENV === 'production',
+    disableErrorMessages: false, // Habilitado para debugging
+    exceptionFactory: (errors) => {
+      console.log('🚨 Validation errors:', JSON.stringify(errors, null, 2));
+      return new BadRequestException({
+        message: 'Dados de entrada inválidos',
+        errors: errors.map(error => ({
+          field: error.property,
+          constraints: error.constraints,
+          value: error.value,
+        })),
+      });
+    },
   }));
 
   // Filtros globais
