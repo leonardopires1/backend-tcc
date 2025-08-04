@@ -122,6 +122,13 @@ export class UsersService {
         id: true,
         nome: true,
         email: true,
+        moradiaDono: {
+          select: {
+            id: true,
+            nome: true,
+            endereco: true,
+          },
+        },
       },
     });
   }
@@ -134,6 +141,13 @@ export class UsersService {
         nome: true,
         email: true,
         senha: true,
+        moradiaDono: {
+          select: {
+            id: true,
+            nome: true,
+            endereco: true,
+          },
+        },
       },
     });
     if (!user) throw new NotFoundException('Usuário não encontrado');
@@ -152,6 +166,13 @@ export class UsersService {
           telefone: true,
           genero: true,
           criadoEm: true,
+          moradiaDono: {
+            select: {
+              id: true,
+              nome: true,
+              endereco: true,
+            },
+          },
         },
       });
 

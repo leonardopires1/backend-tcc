@@ -49,13 +49,6 @@ export default function Home({ navigation }: { navigation: any }) {
       color: '#2196F3',
     },
     {
-      icon: 'home' as keyof typeof Ionicons.glyphMap,
-      title: 'Perfil da Moradia',
-      description: 'Veja detalhes de uma moradia',
-      onPress: () => navigation.navigate("PerfilMoradia"),
-      color: '#FF9800',
-    },
-    {
       icon: 'person' as keyof typeof Ionicons.glyphMap,
       title: 'Meu Perfil',
       description: 'Gerencie suas informações',
@@ -101,17 +94,6 @@ export default function Home({ navigation }: { navigation: any }) {
           ))}
         </View>
 
-        {/* Development Actions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Desenvolvimento</Text>
-          <QuickAction
-            icon="star"
-            title="Tela de Boas Vindas"
-            description="Visualizar tela de apresentação"
-            onPress={() => navigation.navigate("BoasVindas")}
-            color="#FFC107"
-          />
-        </View>
       </ScrollView>
     </SafeAreaView>
   );

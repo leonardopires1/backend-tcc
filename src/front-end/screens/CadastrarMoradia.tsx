@@ -79,7 +79,8 @@ export default function CadastrarMoradia({ navigation }: { navigation: any }) {
         alert('Moradia cadastrada com sucesso!');
         setNomeRepublica('');
         setCep('');
-        navigation.navigate('PerfilMoradia'); 
+        // Navegar para buscar moradias ou home após criar
+        navigation.navigate('Home'); 
       } else {
         const errorData = await res.message;
         alert(errorData || 'Erro ao cadastrar moradia. Tente novamente.');

@@ -11,6 +11,11 @@ interface User {
   telefone: string;
   genero: string;
   moradiaId?: number;
+  moradiaDono?: {
+    id: number;
+    nome: string;
+    endereco: string;
+  }[];
 }
 
 interface AuthState {

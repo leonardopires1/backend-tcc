@@ -13,16 +13,47 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMoradias } from '../hooks/useMoradias';
 
 export default function PerfilMoradia({ route, navigation }: { route: any, navigation: any }) {
-  const { id } = route.params;
-  console.log(id);
+  // Verificação de segurança para route.params
+  const { moradia, id } = route?.params || {};
+  
+  // Priorizar moradia passada diretamente, senão usar id para buscar
+  const moradiaId = moradia?.id || id;
+  
+  console.log('Dados recebidos:', { moradia, id, moradiaId });
+  
   const { moradias } = useMoradias();
+  const [dataMoradia, setDataMoradia] = useState<Moradia | undefined>(moradia);
 
   useEffect(() => {
-    const moradia = moradias.find((m) => m.id === id);
-    setDataMoradia(moradia);
-  }, [moradias, id]);
+    if (moradia) {
+      // Se a moradia foi passada diretamente, usar ela
+      setDataMoradia(moradia);
+      console.log('Usando moradia passada diretamente:', moradia);
+    } else if (moradiaId && moradias.length > 0) {
+      // Senão, buscar pela ID
+      const moradiaEncontrada = moradias.find((m) => m.id === moradiaId);
+      setDataMoradia(moradiaEncontrada);
+      console.log('Moradia encontrada por ID:', moradiaEncontrada);
+    }
+  }, [moradia, moradiaId, moradias]);
 
-  const [dataMoradia, setDataMoradia] = useState<Moradia | undefined>()
+  // Se não há moradia nem ID, mostrar erro
+  if (!moradia && !moradiaId) {
+    console.error('Nem moradia nem ID fornecidos');
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Moradia não encontrada</Text>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.navigate("BuscarMoradia")}
+          >
+            <Text style={styles.backButtonText}>Voltar</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   console.log(dataMoradia);
   return (
@@ -80,6 +111,17 @@ export default function PerfilMoradia({ route, navigation }: { route: any, navig
               <Text style={styles.amenityText}>{item}</Text>
             </View>
           ))}
+          {dataMoradia?.regras?.map((item: string, idx: number) => (
+            <View style={styles.amenityItem} key={idx}>
+              <View style={styles.amenityIcon}>
+                <Text style={styles.checkIcon}>✓</Text>
+              </View>
+              <Text style={styles.amenityText}>{item}</Text>
+            </View>
+          ))}
+          
+
+          {/* Rooms */}
 
 
           {/* Location */}
@@ -291,6 +333,23 @@ const styles = StyleSheet.create({
   contactButtonText: {
     color: '#ffffff',
     fontSize: 18,
+    fontWeight: '600',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 18,
+    color: '#666666',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  backButtonText: {
+    color: '#2563eb',
+    fontSize: 16,
     fontWeight: '600',
   },
 });
