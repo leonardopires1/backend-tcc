@@ -94,7 +94,7 @@ export default function Login({ navigation }: { navigation: any }) {
             <Text style={styles.checkboxLabel}>Continuar conectado</Text>
           </View>
 
-          <TouchableOpacity disabled={loading}>
+          <TouchableOpacity disabled={loading} onPress={() => navigation.navigate("ForgotPassword")}>
             <Text style={styles.forgotText}>Esqueceu a senha</Text>
           </TouchableOpacity>
         </View>

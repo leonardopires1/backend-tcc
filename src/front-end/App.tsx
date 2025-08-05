@@ -14,6 +14,7 @@ import BoasVindas from "./screens/BoasVindas";
 import CadastrarMoradia from "./screens/CadastrarMoradia";
 import PerfilMoradia from "./screens/PerfilMoradia";
 import { Profile } from "./screens/Profile";
+import ForgotPassword from "./screens/ForgotPassword";
 
 const Stack = createNativeStackNavigator();
 
@@ -26,13 +27,13 @@ const AppNavigator = () => {
 
   const screenOptions = {
     headerShown: false,
-    title: '',
+    title: "",
     headerTransparent: true,
   };
 
   return (
     <NavigationContainer>
-      <Stack.Navigator 
+      <Stack.Navigator
         initialRouteName={isAuthenticated ? "Home" : "Login"}
         screenOptions={screenOptions}
       >
@@ -41,7 +42,10 @@ const AppNavigator = () => {
           <>
             <Stack.Screen name="Home" component={Home} />
             <Stack.Screen name="BuscarMoradia" component={BuscarMoradia} />
-            <Stack.Screen name="CadastrarMoradia" component={CadastrarMoradia} />
+            <Stack.Screen
+              name="CadastrarMoradia"
+              component={CadastrarMoradia}
+            />
             <Stack.Screen name="PerfilMoradia" component={PerfilMoradia} />
             <Stack.Screen name="Profile" component={Profile} />
             <Stack.Screen name="BoasVindas" component={BoasVindas} />
@@ -52,6 +56,10 @@ const AppNavigator = () => {
             <Stack.Screen name="Login" component={Login} />
             <Stack.Screen name="Cadastro" component={Cadastro} />
             <Stack.Screen name="BoasVindas" component={BoasVindas} />
+            <Stack.Screen
+              name="ForgotPassword"
+              component={ForgotPassword}
+            />
           </>
         )}
       </Stack.Navigator>

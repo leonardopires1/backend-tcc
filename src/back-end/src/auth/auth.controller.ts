@@ -10,6 +10,7 @@ import {
   UnauthorizedException,
   InternalServerErrorException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { 
   ApiTags, 
@@ -26,6 +27,8 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './auth.guard';
 import { Public } from '../common/decorators/user.decorator';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 class SignInDto {
   @ApiProperty({ 
@@ -208,6 +211,93 @@ export class AuthController {
       return await this.authService.getProfile(req.user.sub);
     } catch (error) {
       throw new UnauthorizedException('Erro ao obter perfil do usuário');
+    }
+  }
+
+  @Public()
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: 'Solicitar recuperação de senha',
+    description: 'Envia email com instruções para redefinir senha do usuário',
+  })
+  @ApiBody({
+    description: 'Email do usuário para recuperação',
+    type: ForgotPasswordDto,
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Solicitação de recuperação processada',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Se o email existir em nossa base, você receberá instruções para redefinir sua senha.',
+        },
+      },
+    }
+  })
+  @ApiResponse({ status: 429, description: 'Muitas tentativas. Tente novamente mais tarde.' })
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    try {
+      console.log('📧 Solicitação de recuperação de senha para:', forgotPasswordDto.email);
+      return await this.authService.forgotPassword(forgotPasswordDto.email);
+    } catch (error) {
+      console.log('❌ Erro na recuperação de senha:', error.message);
+      throw new InternalServerErrorException('Erro interno no servidor');
+    }
+  }
+
+  @Public()
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: 'Redefinir senha',
+    description: 'Redefine a senha do usuário usando o token de recuperação',
+  })
+  @ApiBody({
+    description: 'Dados para redefinição de senha',
+    type: ResetPasswordDto,
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Senha redefinida com sucesso',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Senha redefinida com sucesso!',
+        },
+      },
+    }
+  })
+  @ApiBadRequestResponse({
+    description: 'Token inválido ou dados incorretos',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 400 },
+        message: { type: 'string', example: 'Token inválido ou expirado' },
+        error: { type: 'string', example: 'Bad Request' },
+      },
+    },
+  })
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    try {
+      console.log('🔑 Redefinição de senha solicitada');
+      return await this.authService.resetPassword(
+        resetPasswordDto.token,
+        resetPasswordDto.novaSenha,
+        resetPasswordDto.confirmarNovaSenha
+      );
+    } catch (error) {
+      console.log('❌ Erro na redefinição de senha:', error.message);
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Erro interno no servidor');
     }
   }
 }
