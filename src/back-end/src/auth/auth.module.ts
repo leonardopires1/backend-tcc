@@ -5,10 +5,12 @@ import { UsersModule } from 'src/users/users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthGuard } from './auth.guard';
 import { DatabaseModule } from 'src/database/database.module';
+import { EmailModule } from 'src/email/email.module';
 
 @Module({
   imports: [
     DatabaseModule,
+    EmailModule,
     forwardRef(() => UsersModule),
     JwtModule.register({
       global: true,

@@ -9,6 +9,7 @@ import {
   import * as bcrypt from 'bcrypt';
   import { JwtService } from '@nestjs/jwt';
   import { PrismaService } from 'src/database/prisma.service';
+  import { EmailService } from 'src/email/email.service';
   import * as crypto from 'crypto';
   
   @Injectable()
@@ -21,6 +22,9 @@ import {
 
     @Inject()
     private readonly prisma: PrismaService;
+
+    @Inject()
+    private readonly emailService: EmailService;
   
   async signin(
     params: { email: string; senha: string },
@@ -98,10 +102,18 @@ import {
 
       console.log('✅ Token de reset gerado para usuário:', user.id);
       
-      // TODO: Aqui você implementaria o envio de email
-      // Para desenvolvimento, vamos logar o token
-      console.log('🔗 Token de reset (DESENVOLVIMENTO):', resetToken);
-      console.log('📧 Simular envio de email para:', user.email);
+      // Enviar email de recuperação
+      const emailSent = await this.emailService.sendPasswordResetEmail(
+        user.email,
+        resetToken,
+        user.nome
+      );
+
+      if (emailSent) {
+        console.log('✅ Email de recuperação enviado para:', user.email);
+      } else {
+        console.log('⚠️ Falha no envio do email, mas token foi salvo');
+      }
 
       return { 
         message: 'Se o email existir em nossa base, você receberá instruções para redefinir sua senha.',

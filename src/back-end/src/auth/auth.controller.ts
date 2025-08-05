@@ -238,6 +238,8 @@ export class AuthController {
       },
     }
   })
+
+  @Public()
   @ApiResponse({ status: 429, description: 'Muitas tentativas. Tente novamente mais tarde.' })
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     try {
