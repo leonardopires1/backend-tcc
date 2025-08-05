@@ -8,6 +8,8 @@ import {
   Request,
   UseGuards,
   UnauthorizedException,
+  InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { 
   ApiTags, 
@@ -68,8 +70,8 @@ class ProfileResponseDto {
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('signin')
   @Public()
+  @Post('signin')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ 
     summary: 'Autenticar usuário',
@@ -157,10 +159,12 @@ export class AuthController {
       return await this.authService.signin(signInDto);
     } catch (error) {
       console.log('❌ Erro no signin controller:', error.message);
-      if (error instanceof UnauthorizedException) {
+      // Não mascarar erros específicos do auth service
+      if (error instanceof UnauthorizedException || 
+          error instanceof NotFoundException) {
         throw error;
       }
-      throw new UnauthorizedException('Erro interno no servidor');
+      throw new InternalServerErrorException('Erro interno no servidor');
     }
   }
 

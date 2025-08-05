@@ -1,6 +1,6 @@
 const API_CONFIG = {
   BASE_URL: __DEV__ 
-    ? 'http://192.168.217.124:3000'  // IP local para desenvolvimento
+    ? 'http://192.168.217.2:3000'  // IP local para desenvolvimento
     : 'https://your-production-api.com', // URL de produção
   
   ENDPOINTS: {
