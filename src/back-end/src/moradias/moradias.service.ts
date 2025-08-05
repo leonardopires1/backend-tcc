@@ -112,17 +112,47 @@ export class MoradiasService {
       );
     }
 
-    // Atualiza os usuários para vinculá-los à nova moradia
+    // Atualiza o usuário dono para vinculá-lo à nova moradia
+    await this.prisma.usuario.update({
+      where: { id: donoId },
+      data: {
+        moradiaId: novaMoradia.id,
+      },
+    });
+
+    // Conecta o dono ao relacionamento de moradores
+    await this.prisma.moradia.update({
+      where: { id: novaMoradia.id },
+      data: {
+        moradores: {
+          connect: { id: donoId },
+        },
+      },
+    });
+
+    // Atualiza os demais usuários para vinculá-los à nova moradia (se houver)
     await Promise.all(
       moradoresIds.map((id) =>
         this.prisma.usuario.update({
           where: { id },
           data: {
-            moradiaId: novaMoradia.id, // Corrigido para moradiaId
+            moradiaId: novaMoradia.id,
           },
         }),
       ),
     );
+
+    // Conecta os demais moradores ao relacionamento (se houver)
+    if (moradoresIds.length > 0) {
+      await this.prisma.moradia.update({
+        where: { id: novaMoradia.id },
+        data: {
+          moradores: {
+            connect: moradoresIds.map((id) => ({ id })),
+          },
+        },
+      });
+    }
 
     return novaMoradia;
   }
@@ -135,6 +165,18 @@ export class MoradiasService {
         descricao: true,
         endereco: true,
         dono: { select: { id: true, nome: true, email: true } },
+        moradores: { 
+          select: { 
+            id: true, 
+            nome: true, 
+            email: true 
+          } 
+        },
+        _count: {
+          select: {
+            moradores: true,
+          },
+        },
       },
     });
   }
@@ -150,6 +192,21 @@ export class MoradiasService {
         regrasMoradia: true,
         comodidades: true,
         dono: { select: { id: true, nome: true, email: true } },
+        moradores: { 
+          select: { 
+            id: true, 
+            nome: true, 
+            email: true, 
+            telefone: true 
+          } 
+        },
+        _count: {
+          select: {
+            moradores: true,
+            tarefas: true,
+            despesas: true,
+          },
+        },
       },
     });
     console.log('Moradia encontrada:', moradia);
@@ -186,29 +243,12 @@ export class MoradiasService {
   }
 
   async remove(id: number) {
+    console.log(`🗑️  Iniciando remoção da moradia ID: ${id}`);
+    
     try {
-      // Inicia uma transação
+      // Inicia uma transação com timeout estendido (30 segundos)
       const result = await this.prisma.$transaction(async (prisma) => {
-        // Primeiro, exclui as tarefas associadas à moradia
-        await prisma.tarefa.deleteMany({
-          where: {
-            moradiaId: id,
-          },
-        });
-
-        // Em seguida, exclui as despesas associadas à moradia
-        await prisma.despesa.deleteMany({
-          where: {
-            moradiaId: id,
-          },
-        });
-
-        await this.regrasMoradiaService.deleteRegraMoradiaByMoradiaId(id);
-
-        await this.comodidadesMoradiaService.removeComodidadeFromMoradiaByMoradiaId(id);
-
-        // Por fim, exclui a moradia
-        return prisma.moradia.delete({
+        const moradiaRemovida = await prisma.moradia.delete({
           where: {
             id,
           },
@@ -218,10 +258,19 @@ export class MoradiasService {
             endereco: true,
           },
         });
+        console.log(`✅ Moradia removida:`, moradiaRemovida);
+
+        return moradiaRemovida;
+      }, {
+        timeout: 30000, // 30 segundos de timeout
+        maxWait: 10000, // Máximo 10 segundos para conseguir uma conexão
       });
 
+      console.log(`🎉 Moradia ${id} removida com sucesso!`);
       return result;
     } catch (error) {
+      console.error(`❌ Erro ao remover moradia ${id}:`, error);
+      console.error(`❌ Stack trace:`, error.stack);
       throw new NotFoundException('Moradia não encontrada ou erro ao remover');
     }
   }

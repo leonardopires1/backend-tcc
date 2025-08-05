@@ -33,6 +33,24 @@ class HttpService {
     return token || null;
   }
 
+  // Verifica se o servidor está acessível
+  private async checkConnectivity(): Promise<boolean> {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s para teste de conectividade
+      
+      const response = await fetch(`${this.baseURL}/health`, {
+        method: 'GET',
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+
   private async makeRequest<T>(
     endpoint: string, 
     options: RequestOptions = {}
@@ -48,7 +66,7 @@ class HttpService {
     const fallbackResponse: ApiResponse<T> = {
       status: 0,
       ok: false,
-      error: 'Erro de conectividade - mas o app continua funcionando!',
+      error: 'Erro de conectividade. Verifique sua conexão e tente novamente.',
     };
 
     const result = await safeExecute(async () => {
@@ -73,35 +91,51 @@ class HttpService {
       };
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+      const timeoutId = setTimeout(() => {
+        console.log(`⏰ Request timeout after ${this.timeout}ms for ${url}`);
+        controller.abort();
+      }, this.timeout);
 
-      const response = await fetch(url, {
-        ...requestConfig,
-        signal: controller.signal,
-      });
+      try {
+        const response = await fetch(url, {
+          ...requestConfig,
+          signal: controller.signal,
+        });
 
-      clearTimeout(timeoutId);
+        clearTimeout(timeoutId);
 
-      let data: T | undefined;
-      const contentType = response.headers.get('content-type');
-      
-      if (contentType?.includes('application/json')) {
-        data = await response.json();
+        let data: T | undefined;
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType?.includes('application/json')) {
+          data = await response.json();
+        }
+
+        const apiResponse: ApiResponse<T> = {
+          data,
+          status: response.status,
+          ok: response.ok,
+          error: !response.ok ? (data as any)?.message || response.statusText : undefined,
+        };
+
+        // Se houve erro e deve mostrar ao usuário
+        if (!response.ok && showErrorToUser) {
+          showUserFriendlyError(apiResponse.error);
+        }
+
+        return apiResponse;
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        
+        // Tratamento específico para AbortError
+        if (fetchError.name === 'AbortError') {
+          console.log(`🚫 Request aborted for ${url}`);
+          throw new Error('Tempo limite da requisição excedido. Tente novamente.');
+        }
+        
+        // Re-throw outros erros para serem tratados pelo safeExecute
+        throw fetchError;
       }
-
-      const apiResponse: ApiResponse<T> = {
-        data,
-        status: response.status,
-        ok: response.ok,
-        error: !response.ok ? (data as any)?.message || response.statusText : undefined,
-      };
-
-      // Se houve erro e deve mostrar ao usuário
-      if (!response.ok && showErrorToUser) {
-        showUserFriendlyError(apiResponse.error);
-      }
-
-      return apiResponse;
     }, fallbackResponse, showErrorToUser);
 
     return result || fallbackResponse;

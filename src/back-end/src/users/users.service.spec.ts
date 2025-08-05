@@ -49,7 +49,7 @@ describe('UsersService', () => {
       email: 'joao@email.com',
       senha: 'senha123A',
       confirmarSenha: 'senha123A',
-      cpf: '12345678901',
+      cpf: '11144477735', // CPF válido para testes
       telefone: '11987654321',
       genero: 'Masculino',
     };
@@ -60,7 +60,7 @@ describe('UsersService', () => {
         id: 1,
         nome: 'João Silva',
         email: 'joao@email.com',
-        cpf: '12345678901',
+        cpf: '11144477735',
         telefone: '11987654321',
         genero: 'Masculino',
         criadoEm: new Date(),
@@ -78,7 +78,7 @@ describe('UsersService', () => {
           nome: 'João Silva',
           email: 'joao@email.com',
           senha: hashedPassword,
-          cpf: '12345678901',
+          cpf: '11144477735',
           genero: 'Masculino',
           telefone: '11987654321',
         },

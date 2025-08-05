@@ -10,7 +10,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import MapView, { Marker } from "react-native-maps";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import * as Location from 'expo-location';
 import Moradia from "../types/Moradia";
 import MoradiaCard from "../components/MoradiaCard";
 import { useMoradias } from "../hooks/useMoradias";
@@ -20,6 +21,44 @@ import { ErrorMessage } from "../components/common/ErrorMessage";
 export default function BuscarMoradia({ navigation }: { navigation: any }) {
   const { moradias, loading, error, refreshMoradias } = useMoradias();
   const [refreshing, setRefreshing] = useState(false);
+  const [userLocation, setUserLocation] = useState<string>("Localizando...");
+
+  useEffect(() => {
+    getCurrentLocation();
+  }, []);
+
+  const getCurrentLocation = async () => {
+    try {
+      // Solicita permissão para acessar a localização
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      
+      if (status !== 'granted') {
+        setUserLocation("Sua cidade..."); // Fallback caso não tenha permissão
+        return;
+      }
+
+      // Obtém a localização atual
+      const location = await Location.getCurrentPositionAsync({});
+      
+      // Faz geocodificação reversa para obter o endereço
+      const reverseGeocode = await Location.reverseGeocodeAsync({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+
+      if (reverseGeocode.length > 0) {
+        const address = reverseGeocode[0];
+        const city = address.city || address.subregion || "Cidade";
+        const state = address.region || "Estado";
+        setUserLocation(`${city}, ${state}`);
+      } else {
+        setUserLocation("Sua cidade..."); // Fallback
+      }
+    } catch (error) {
+      console.error('Erro ao obter localização:', error);
+      setUserLocation("Sua cidade..."); // Fallback em caso de erro
+    }
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -59,7 +98,7 @@ export default function BuscarMoradia({ navigation }: { navigation: any }) {
           />
         </TouchableOpacity>
         <View style={styles.locationContainer}>
-          <Text style={styles.locationText}>Bauru, SP</Text>
+          <Text style={styles.locationText}>{userLocation}</Text>
         </View>
         <TouchableOpacity style={styles.filterButton}>
           <Ionicons name="options-outline" size={24} color="black" />
