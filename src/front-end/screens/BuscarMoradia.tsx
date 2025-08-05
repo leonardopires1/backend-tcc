@@ -13,7 +13,7 @@ import MapView, { Marker } from "react-native-maps";
 import React, { useState, useEffect } from "react";
 import * as Location from 'expo-location';
 import Moradia from "../types/Moradia";
-import MoradiaCard from "../components/MoradiaCard";
+import MoradiaCard from "../components/moradiaCard";
 import { useMoradias } from "../hooks/useMoradias";
 import { Loading } from "../components/common/Loading";
 import { ErrorMessage } from "../components/common/ErrorMessage";
