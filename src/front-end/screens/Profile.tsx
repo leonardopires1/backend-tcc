@@ -1,61 +1,71 @@
-import { 
-  SafeAreaView, 
-  StyleSheet, 
-  View, 
-  Text, 
-  Image, 
-  TouchableOpacity, 
+import {
+  SafeAreaView,
+  StyleSheet,
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
   StatusBar,
   ScrollView,
-  Alert
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
+
+// callback de seleção
+interface ImageAsset {
+  uri: string;
+  fileName?: string;
+  type: string;
+}
+
+interface ImagePickerResponse {
+  didCancel?: boolean;
+  errorCode?: string;
+  assets?: ImageAsset[];
+}
 
 export const Profile = ({ navigation }: { navigation: any }) => {
   const { user, logout } = useAuth();
 
   const handleLogout = () => {
-    Alert.alert(
-      "Sair da conta",
-      "Tem certeza que deseja sair?",
-      [
-        {
-          text: "Cancelar",
-          style: "cancel"
+    Alert.alert("Sair da conta", "Tem certeza que deseja sair?", [
+      {
+        text: "Cancelar",
+        style: "cancel",
+      },
+      {
+        text: "Sair",
+        style: "destructive",
+        onPress: () => {
+          logout();
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "Login" }],
+          });
         },
-        {
-          text: "Sair",
-          style: "destructive",
-          onPress: () => {
-            logout();
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'Login' }],
-            });
-          }
-        }
-      ]
-    );
+      },
+    ]);
   };
 
   const handleCadastrarMoradia = () => {
-    navigation.navigate('CadastrarMoradia');
+    navigation.navigate("CadastrarMoradia");
   };
 
   const handleProcurarRepublica = () => {
-    navigation.navigate('BuscarMoradia');
+    navigation.navigate("BuscarMoradia");
   };
 
   const getInitials = (name: string) => {
     return name
-      .split(' ')
-      .map(word => word.charAt(0))
-      .join('')
+      .split(" ")
+      .map((word) => word.charAt(0))
+      .join("")
       .toUpperCase()
       .substring(0, 2);
   };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#076df2" />
@@ -63,7 +73,6 @@ export const Profile = ({ navigation }: { navigation: any }) => {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Blue header with curved bottom */}
         <View style={styles.header}>
-
           {/* Curved bottom shape */}
           <View style={styles.curveContainer}>
             <View style={styles.curve} />
@@ -74,32 +83,34 @@ export const Profile = ({ navigation }: { navigation: any }) => {
         <View style={styles.profileImageContainer}>
           <View style={styles.avatarFallback}>
             <Text style={styles.avatarText}>
-              {user?.nome ? getInitials(user.nome) : 'US'}
+              {user?.nome ? getInitials(user.nome) : "US"}
             </Text>
           </View>
         </View>
 
         {/* Profile information */}
         <View style={styles.profileInfo}>
-          <Text style={styles.profileName}>
-            {user?.nome || 'Usuário'}
-          </Text>
+          <Text style={styles.profileName}>{user?.nome || "Usuário"}</Text>
           <Text style={styles.profileEmail}>
-            {user?.email || 'email@exemplo.com'}
+            {user?.email || "email@exemplo.com"}
           </Text>
-          
+
           {user?.telefone && (
             <View style={styles.infoRow}>
               <Ionicons name="call-outline" size={16} color="#666" />
               <Text style={styles.infoText}>{user.telefone}</Text>
             </View>
           )}
-          
+
           {user?.cpf && (
             <View style={styles.infoRow}>
               <Ionicons name="card-outline" size={16} color="#666" />
               <Text style={styles.infoText}>
-                CPF: {user.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.***.***-$4')}
+                CPF:{" "}
+                {user.cpf.replace(
+                  /(\d{3})(\d{3})(\d{3})(\d{2})/,
+                  "$1.***.***-$4"
+                )}
               </Text>
             </View>
           )}
@@ -108,45 +119,57 @@ export const Profile = ({ navigation }: { navigation: any }) => {
             <View style={styles.infoRow}>
               <Ionicons name="person-outline" size={16} color="#666" />
               <Text style={styles.infoText}>
-                {user.genero === 'M' ? 'Masculino' : user.genero === 'F' ? 'Feminino' : user.genero}
+                {user.genero === "M"
+                  ? "Masculino"
+                  : user.genero === "F"
+                  ? "Feminino"
+                  : user.genero}
               </Text>
             </View>
           )}
 
           <Text style={styles.statusMessage}>
-            {user?.moradiaId ? 
-              `Você faz parte de uma moradia (ID: ${user.moradiaId})` : 
-              'Você ainda não faz parte de nenhuma moradia.'
-            }
+            {user?.moradiaId
+              ? `Você faz parte de uma moradia (ID: ${user.moradiaId})`
+              : "Você ainda não faz parte de nenhuma moradia."}
           </Text>
 
           <Text style={styles.statusMessage}>
-            {user?.moradiaDono && user.moradiaDono.length > 0 ? 
-              `Você é dono de ${user.moradiaDono.length} moradias` : 
-              'Você ainda não tem moradia cadastrada.'
-            }
+            {user?.moradiaDono && user.moradiaDono.length > 0
+              ? `Você é dono de ${user.moradiaDono.length} moradias`
+              : "Você ainda não tem moradia cadastrada."}
           </Text>
         </View>
 
         {/* Action buttons */}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity 
-            style={styles.primaryButton} 
+          <TouchableOpacity
+            style={styles.primaryButton}
             activeOpacity={0.8}
             onPress={handleCadastrarMoradia}
           >
-            <Ionicons name="home-outline" size={20} color="white" style={styles.buttonIcon} />
+            <Ionicons
+              name="home-outline"
+              size={20}
+              color="white"
+              style={styles.buttonIcon}
+            />
             <Text style={styles.primaryButtonText}>Cadastrar Moradia</Text>
           </TouchableOpacity>
 
           <Text style={styles.orText}>ou</Text>
 
-          <TouchableOpacity 
-            style={styles.secondaryButton} 
+          <TouchableOpacity
+            style={styles.secondaryButton}
             activeOpacity={0.8}
             onPress={handleProcurarRepublica}
           >
-            <Ionicons name="search-outline" size={20} color="#076df2" style={styles.buttonIcon} />
+            <Ionicons
+              name="search-outline"
+              size={20}
+              color="#076df2"
+              style={styles.buttonIcon}
+            />
             <Text style={styles.secondaryButtonText}>Procurar República</Text>
           </TouchableOpacity>
 
@@ -179,8 +202,8 @@ export const Profile = ({ navigation }: { navigation: any }) => {
         </View>
       </ScrollView>
     </SafeAreaView>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -195,10 +218,10 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 0,
   },
   headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
     paddingHorizontal: 20,
   },
   headerTitle: {
@@ -206,12 +229,12 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: "bold",
     flex: 1,
-    textAlign: 'center',
+    textAlign: "center",
   },
   logoutButton: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
   },
   curveContainer: {
     height: 50,
@@ -250,17 +273,17 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#076df2',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#076df2",
+    justifyContent: "center",
+    alignItems: "center",
   },
   avatarText: {
-    color: 'white',
+    color: "white",
     fontSize: 40,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   profileInfo: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingHorizontal: 24,
     marginTop: 16,
   },
@@ -277,8 +300,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 8,
   },
   infoText: {
@@ -291,7 +314,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
     marginTop: 16,
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
   buttonContainer: {
     paddingHorizontal: 24,
@@ -311,8 +334,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
   },
   primaryButtonText: {
     color: "white",
@@ -328,8 +351,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     width: "100%",
     alignItems: "center",
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
   },
   secondaryButtonText: {
     color: "#076df2",
@@ -345,18 +368,18 @@ const styles = StyleSheet.create({
     marginVertical: 16,
   },
   additionalOptions: {
-    width: '100%',
+    width: "100%",
     marginTop: 32,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
     borderRadius: 12,
     padding: 16,
   },
   optionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 16,
     paddingHorizontal: 12,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 8,
     marginBottom: 8,
     elevation: 1,
@@ -368,7 +391,7 @@ const styles = StyleSheet.create({
   optionText: {
     flex: 1,
     fontSize: 16,
-    color: '#333',
+    color: "#333",
     marginLeft: 12,
   },
-})
+});

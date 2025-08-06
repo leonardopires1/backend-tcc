@@ -210,6 +210,15 @@ export class UsersService {
     }
   }
 
+  async updateAvatar(userId: string, file: string) {
+    if (file) {
+      await this.prisma.usuario.update({
+        where: { id: +userId },
+        data: { avatarUrl: file },
+      });
+    }
+  }
+
   async remove(id: number) {
     try {
       return await this.prisma.usuario.delete({

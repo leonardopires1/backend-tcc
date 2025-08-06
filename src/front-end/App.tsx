@@ -56,10 +56,7 @@ const AppNavigator = () => {
             <Stack.Screen name="Login" component={Login} />
             <Stack.Screen name="Cadastro" component={Cadastro} />
             <Stack.Screen name="BoasVindas" component={BoasVindas} />
-            <Stack.Screen
-              name="ForgotPassword"
-              component={ForgotPassword}
-            />
+            <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
           </>
         )}
       </Stack.Navigator>

@@ -8,6 +8,9 @@ import {
   Delete, 
   ParseIntPipe,
   UseInterceptors,
+  UploadedFile,
+  HttpStatus,
+  HttpException,
 } from '@nestjs/common';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { 
@@ -95,6 +98,22 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto
   ) {
     return await this.usersService.update(id, updateUserDto);
+  }
+
+   async uploadAvatar(
+    @Param('id') userId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new HttpException('Arquivo não enviado', HttpStatus.BAD_REQUEST);
+    }
+    // URL pública ou caminho relativo
+    const avatarUrl = `/uploads/${file.filename}`;
+
+    // Salva no banco de dados
+    await this.usersService.updateAvatar(userId, avatarUrl);
+
+    return { avatarUrl };
   }
 
   @Delete(':id')

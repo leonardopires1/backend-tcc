@@ -8,38 +8,39 @@ datasource db {
 }
 
 model Usuario {
-  id             Int      @id @default(autoincrement())
-  nome           String
-  email          String   @unique
-  senha          String
-  cpf            String   @unique
-  telefone       String   @unique
-  genero         String
-  criadoEm       DateTime @default(now())
-  moradia        Moradia? @relation("UsuarioMoradia", fields: [moradiaId], references: [id])  // Relacionamento com a moradia
-  moradiaId      Int?     // Referência para a moradia
+  id                 Int                @id @default(autoincrement())
+  nome               String
+  email              String             @unique
+  senha              String
+  cpf                String             @unique
+  telefone           String             @unique
+  genero             String
+  criadoEm           DateTime           @default(now())
+  moradia            Moradia?           @relation("UsuarioMoradia", fields: [moradiaId], references: [id]) // Relacionamento com a moradia
+  moradiaId          Int? // Referência para a moradia
   atribuicoesTarefas AtribuicaoTarefa[]
   despesasUsuario    DespesaUsuario[]
-  moradiaDono    Moradia? @relation("Donomoradia") // Relacionamento inverso para dono da moradia
-  moradias      Moradia[] @relation("Moradores") // Relacionamento inverso para moradores
-  resetToken  String?  
-  resetTokenExp DateTime?
+  moradiaDono        Moradia?           @relation("Donomoradia") // Relacionamento inverso para dono da moradia
+  moradias           Moradia[]          @relation("Moradores") // Relacionamento inverso para moradores
+  resetToken         String?
+  resetTokenExp      DateTime?
+  avatarUrl             String? // Campo para armazenar o nome do arquivo do avatar
 }
 
 model Moradia {
-  id        Int       @id @default(autoincrement())
-  nome      String
-  descricao String    @default("Moradia compartilhada")
-  endereco  String?
-  criadoEm  DateTime  @default(now())
-  dono      Usuario?  @relation("Donomoradia", fields: [donoId], references: [id])  // Relacionamento com o dono
-  donoId    Int?      @unique  // Referência única ao dono
-  moradores Usuario[] @relation("Moradores")  // Relacionamento com vários usuários morando na mesma moradia
-  usuarios  Usuario[] @relation("UsuarioMoradia") // Relacionamento inverso para moradia em Usuario
-  tarefas   Tarefa[]
-  despesas  Despesa[]
+  id            Int             @id @default(autoincrement())
+  nome          String
+  descricao     String          @default("Moradia compartilhada")
+  endereco      String?
+  criadoEm      DateTime        @default(now())
+  dono          Usuario?        @relation("Donomoradia", fields: [donoId], references: [id]) // Relacionamento com o dono
+  donoId        Int?            @unique // Referência única ao dono
+  moradores     Usuario[]       @relation("Moradores") // Relacionamento com vários usuários morando na mesma moradia
+  usuarios      Usuario[]       @relation("UsuarioMoradia") // Relacionamento inverso para moradia em Usuario
+  tarefas       Tarefa[]
+  despesas      Despesa[]
   regrasMoradia RegrasMoradia[]
-  comodidades Comodidades[]
+  comodidades   Comodidades[]
 }
 
 model Tarefa {
@@ -65,12 +66,12 @@ model Despesa {
 }
 
 model AtribuicaoTarefa {
-  id            Int      @id @default(autoincrement())
-  concluida     Boolean  @default(false)
-  tarefa        Tarefa   @relation(fields: [tarefaId], references: [id])
-  tarefaId      Int
-  usuario       Usuario  @relation(fields: [usuarioId], references: [id])
-  usuarioId     Int
+  id        Int     @id @default(autoincrement())
+  concluida Boolean @default(false)
+  tarefa    Tarefa  @relation(fields: [tarefaId], references: [id])
+  tarefaId  Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId Int
 }
 
 model DespesaUsuario {
@@ -85,24 +86,24 @@ model DespesaUsuario {
 }
 
 model Regras {
-  id          Int      @id @default(autoincrement())
+  id            Int             @id @default(autoincrement())
   titulo        String
-  descricao   String?
+  descricao     String?
   regrasMoradia RegrasMoradia[]
 }
 
 model RegrasMoradia {
-  id          Int      @id @default(autoincrement())
-  moradia     Moradia  @relation(fields: [moradiaId], references: [id])
-  moradiaId   Int
-  regra       Regras   @relation(fields: [regraId], references: [id])
-  regraId     Int
+  id        Int     @id @default(autoincrement())
+  moradia   Moradia @relation(fields: [moradiaId], references: [id])
+  moradiaId Int
+  regra     Regras  @relation(fields: [regraId], references: [id])
+  regraId   Int
 }
 
 model Comodidades {
-  id          Int      @id @default(autoincrement())
-  nome        String
-  descricao   String?
-  moradia     Moradia  @relation(fields: [moradiaId], references: [id])
-  moradiaId   Int    
+  id        Int     @id @default(autoincrement())
+  nome      String
+  descricao String?
+  moradia   Moradia @relation(fields: [moradiaId], references: [id])
+  moradiaId Int
 }
