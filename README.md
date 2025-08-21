@@ -6,8 +6,8 @@ Aplicativo para **buscar** e **gerenciar casas compartilhadas**, ideal para estu
 
 - **Backend:** [NestJS](https://nestjs.com/) (Node.js + TypeScript)
 - **Mobile:** [React Native](https://reactnative.dev/) com Expo
-- **Banco de Dados:** PostgreSQL (ou substitua pelo banco que você estiver usando)
-- **API de Mapas:** Google Maps API (para localizar repúblicas próximas)
+- **Banco de Dados:** PostgreSQL
+- **API de Mapas:** Google Maps API 
 
 ---
 
