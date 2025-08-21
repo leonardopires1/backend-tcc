@@ -6,7 +6,7 @@ import Moradia from '../types/Moradia';
 interface UseMoradiasReturn {
   moradias: Moradia[];
   loading: boolean;
-  error: string | null;
+  error: any; // Permitir qualquer tipo, ErrorMessage vai tratar
   refreshMoradias: () => Promise<void>;
   createMoradia: (moradiaData: Partial<Moradia>) => Promise<{ success: boolean; message?: string; data?: Moradia }>;
   updateMoradia: (id: number, moradiaData: Partial<Moradia>) => Promise<{ success: boolean; message?: string }>;
@@ -17,7 +17,7 @@ interface UseMoradiasReturn {
 export const useMoradias = (): UseMoradiasReturn => {
   const [moradias, setMoradias] = useState<Moradia[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<any>(null);
 
   const fetchMoradias = useCallback(async () => {
     try {
@@ -32,7 +32,7 @@ export const useMoradias = (): UseMoradiasReturn => {
         setError(response.error || 'Erro ao carregar moradias');
       }
     } catch (err: any) {
-      setError(err.message || 'Erro inesperado');
+      setError(err.message || err || 'Erro inesperado');
     } finally {
       setLoading(false);
     }

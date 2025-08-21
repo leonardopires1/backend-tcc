@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeText } from './SafeText';
 
 interface ErrorMessageProps {
-  message: string;
+  message: any; // Permitir qualquer tipo, SafeText vai tratar
   onRetry?: () => void;
   showRetry?: boolean;
 }
@@ -17,7 +18,7 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
     <View style={styles.container}>
       <Ionicons name="alert-circle" size={64} color="#FF6B6B" />
       <Text style={styles.title}>Oops! Algo deu errado</Text>
-      <Text style={styles.message}>{message}</Text>
+      <SafeText style={styles.message}>{message}</SafeText>
       
       {showRetry && onRetry && (
         <TouchableOpacity style={styles.retryButton} onPress={onRetry}>

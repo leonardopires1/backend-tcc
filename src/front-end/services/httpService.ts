@@ -26,6 +26,19 @@ class HttpService {
     this.timeout = API_CONFIG.TIMEOUT;
   }
 
+  // Função utilitária para extrair mensagem de erro
+  private extractErrorMessage(error: any): string {
+    if (typeof error === 'string') {
+      return error;
+    }
+    
+    if (error && typeof error === 'object') {
+      return error.message || error.error || JSON.stringify(error);
+    }
+    
+    return 'Erro desconhecido';
+  }
+
   private async getAuthToken(): Promise<string | null> {
     const token = await safeExecute(async () => {
       return await AsyncStorage.getItem('userToken');
@@ -115,12 +128,12 @@ class HttpService {
           data,
           status: response.status,
           ok: response.ok,
-          error: !response.ok ? (data as any)?.message || response.statusText : undefined,
+          error: !response.ok ? this.extractErrorMessage(data) : undefined,
         };
 
         // Se houve erro e deve mostrar ao usuário
         if (!response.ok && showErrorToUser) {
-          showUserFriendlyError(apiResponse.error);
+          showUserFriendlyError(this.extractErrorMessage(apiResponse.error));
         }
 
         return apiResponse;
