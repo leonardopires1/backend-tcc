@@ -10,16 +10,23 @@ import {
   StatusBar,
   TouchableWithoutFeedback,
   Keyboard,
+  ScrollView,
+  Platform,
+  KeyboardAvoidingView,
+  ActivityIndicator,
 } from 'react-native';
-import { COLORS } from '../constants';
+import { Ionicons } from '@expo/vector-icons';
+import { COLORS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../constants';
 import { useAuth } from '../contexts/AuthContext';
 import { useMoradias } from '../hooks/useMoradias';
 
 export default function CadastrarMoradia({ navigation }: { navigation: any }) {
   const [nomeRepublica, setNomeRepublica] = useState('');
   const [cep, setCep] = useState('');
+  const [mensalidade, setMensalidade] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useAuth(); 
+  const [errors, setErrors] = useState<{ nome?: string; cep?: string; mensalidade?: string }>({});
+  const { user } = useAuth();
   const { createMoradia } = useMoradias();
 
   // Função para formatar CEP automaticamente
@@ -35,52 +42,78 @@ export default function CadastrarMoradia({ navigation }: { navigation: any }) {
     return limitedText;
   };
 
+  // Função para formatar valor monetário
+  const formatMoney = (text: string) => {
+    // Remove tudo que não for número
+    const cleanedText = text.replace(/\D/g, '');
+    
+    if (cleanedText === '') return '';
+    
+    // Converte para número e divide por 100 para obter os centavos
+    const value = parseInt(cleanedText) / 100;
+    
+    // Formata como moeda brasileira
+    return value.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    });
+  };
+
+  // Função para obter o valor numérico da mensalidade
+  const getMensalidadeValue = (formattedValue: string) => {
+    const cleanedValue = formattedValue.replace(/\D/g, '');
+    if (cleanedValue === '') return 0;
+    return parseInt(cleanedValue) / 100;
+  };
+
   const handleCriarMoradia = async () => {
-    if (isLoading) return; // Previne múltiplos cliques
-    
-    // Fecha o teclado antes de processar
+    if (isLoading) return;
     Keyboard.dismiss();
-    
     const userId = user ? user.id : null;
-
+    let newErrors: { nome?: string; cep?: string; mensalidade?: string } = {};
+    
     if (!nomeRepublica.trim()) {
-      alert('Por favor, informe o nome da moradia.');
-      return;
+      newErrors.nome = 'Informe o nome da moradia.';
     }
-
+    
     if (!cep.trim()) {
-      alert('Por favor, informe o CEP.');
-      return;
+      newErrors.cep = 'Informe o CEP.';
     }
-
-    // Remove formatação do CEP para validação
+    
     const cleanCEP = cep.replace(/\D/g, '');
     const cepRegex = /^[0-9]{8}$/;
-    if (!cepRegex.test(cleanCEP)) {
-      alert('CEP inválido. Deve conter 8 dígitos numéricos.');
-      return;
+    if (cep && !cepRegex.test(cleanCEP)) {
+      newErrors.cep = 'CEP inválido. Deve conter 8 dígitos.';
     }
-
+    
+    if (!mensalidade.trim()) {
+      newErrors.mensalidade = 'Informe o valor da mensalidade.';
+    } else {
+      const valorMensalidade = getMensalidadeValue(mensalidade);
+      if (valorMensalidade <= 0) {
+        newErrors.mensalidade = 'O valor da mensalidade deve ser maior que zero.';
+      }
+    }
     if (!userId) {
-      alert('Usuário não autenticado. Por favor, faça login.');
+      alert('Usuário não autenticado. Faça login.');
       return;
     }
-
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
     setIsLoading(true);
-
     try {
       const res = await createMoradia({
         nome: nomeRepublica.trim(),
-        endereco: `CEP: ${cleanCEP}`, // Formatando o CEP como parte do endereço
+        endereco: `CEP: ${cleanCEP}`,
+        valorMensalidade: getMensalidadeValue(mensalidade),
         donoId: userId,
       });
-
       if (res.success) {
         alert('Moradia cadastrada com sucesso!');
         setNomeRepublica('');
         setCep('');
-        // Navegar para buscar moradias ou home após criar
-        navigation.navigate('Home'); 
+        setMensalidade('');
+        navigation.navigate('Home');
       } else {
         const errorData = await res.message;
         alert(errorData || 'Erro ao cadastrar moradia. Tente novamente.');
@@ -94,53 +127,81 @@ export default function CadastrarMoradia({ navigation }: { navigation: any }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#4A90E2" />
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.background}>
-          <View style={styles.card}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.WHITE} />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.backWrapper}>
+            <TouchableOpacity style={styles.unifiedBackBtn} onPress={() => navigation.goBack()}>
+              <Ionicons name="chevron-back" size={20} color={COLORS.PRIMARY} />
+              <Text style={styles.unifiedBackText}>Voltar</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.content}> 
             <Text style={styles.title}>Cadastrar Moradia</Text>
-            
             <View style={styles.inputContainer}>
+              <Text style={styles.label}>Nome da moradia</Text>
               <TextInput
-                style={styles.input}
-                placeholder="nome da moradia"
-                placeholderTextColor="#A0A0A0"
+                style={[styles.input, errors.nome && styles.inputError]}
+                placeholder="Digite o nome da moradia"
                 value={nomeRepublica}
                 onChangeText={setNomeRepublica}
                 editable={!isLoading}
                 returnKeyType="next"
                 onSubmitEditing={() => Keyboard.dismiss()}
               />
+              {errors.nome && <Text style={styles.errorText}>{errors.nome}</Text>}
             </View>
-
             <View style={styles.inputContainer}>
+              <Text style={styles.label}>CEP</Text>
               <TextInput
-                style={styles.input}
-                placeholder="CEP (ex: 12345-678)"
-                placeholderTextColor="#A0A0A0"
+                style={[styles.input, errors.cep && styles.inputError]}
+                placeholder="Ex: 12345-678"
                 value={cep}
                 onChangeText={(text) => setCep(formatCEP(text))}
                 keyboardType="numeric"
-                maxLength={9} // Aumentado para acomodar a formatação
+                maxLength={9}
+                editable={!isLoading}
+                returnKeyType="next"
+                onSubmitEditing={() => Keyboard.dismiss()}
+              />
+              {errors.cep && <Text style={styles.errorText}>{errors.cep}</Text>}
+            </View>
+            
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Mensalidade</Text>
+              <TextInput
+                style={[styles.input, errors.mensalidade && styles.inputError]}
+                placeholder="Ex: R$ 500,00"
+                value={mensalidade}
+                onChangeText={(text) => setMensalidade(formatMoney(text))}
+                keyboardType="numeric"
                 editable={!isLoading}
                 returnKeyType="done"
                 onSubmitEditing={() => Keyboard.dismiss()}
               />
+              {errors.mensalidade && <Text style={styles.errorText}>{errors.mensalidade}</Text>}
             </View>
-
-            <TouchableOpacity 
-              style={[styles.button, isLoading && styles.buttonDisabled]}
+            <TouchableOpacity
+              style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
               onPress={handleCriarMoradia}
               activeOpacity={0.8}
               disabled={isLoading}
             >
-              <Text style={[styles.buttonText, isLoading && styles.buttonTextDisabled]}>
-                {isLoading ? 'criando...' : 'criar moradia'}
+              <Text style={styles.submitButtonText}>
+                {isLoading ? <ActivityIndicator size="small" color={COLORS.GRAY_DARK} /> : 'Cadastrar'}
               </Text>
             </TouchableOpacity>
           </View>
-        </View>
-      </TouchableWithoutFeedback>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -148,66 +209,92 @@ export default function CadastrarMoradia({ navigation }: { navigation: any }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: COLORS.WHITE,
   },
-  background: {
+  scrollView: {
     flex: 1,
-    backgroundColor: COLORS.PRIMARY,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
   },
-  card: {
-    backgroundColor: '#FFFFFF',
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: SPACING.MD,
+    paddingBottom: SPACING.XL,
+    justifyContent: 'center',
+  },
+  backWrapper: {
+    position: 'absolute',
+    top: SPACING.LG,
+    left: SPACING.MD,
+    zIndex: 10,
+  },
+  unifiedBackBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eef5ff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 20,
-    padding: 40,
+    borderWidth: 1,
+    borderColor: '#dbeafe'
+  },
+  unifiedBackText: {
+    color: COLORS.PRIMARY,
+    fontWeight: '600',
+    marginLeft: 4,
+    fontSize: 14
+  },
+  content: {
     width: '100%',
-    maxWidth: 350,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
+    maxWidth: 420,
+    alignSelf: 'center',
+    backgroundColor: COLORS.WHITE,
   },
   title: {
-    fontSize: 32,
+    fontSize: FONT_SIZES.XXL,
     fontWeight: 'bold',
-    color: COLORS.PRIMARY,
-    textAlign: 'left',
-    marginBottom: 40,
-    lineHeight: 38,
+    color: COLORS.TEXT_PRIMARY,
+    textAlign: 'center',
+    marginBottom: SPACING.XL,
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: SPACING.LG,
+  },
+  label: {
+    fontSize: FONT_SIZES.MD,
+    fontWeight: '600',
+    color: COLORS.TEXT_PRIMARY,
+    marginBottom: SPACING.SM,
   },
   input: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 18,
-    fontSize: 16,
-    color: '#333',
-    borderWidth: 0,
+    backgroundColor: COLORS.GRAY_LIGHT,
+    borderRadius: BORDER_RADIUS.LG,
+    padding: SPACING.MD,
+    fontSize: FONT_SIZES.MD,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    color: COLORS.TEXT_PRIMARY,
   },
-  button: {
+  inputError: {
+    borderColor: COLORS.ERROR,
+  },
+  errorText: {
+    color: COLORS.ERROR,
+    fontSize: FONT_SIZES.SM,
+    marginTop: 4,
+  },
+  submitButton: {
     backgroundColor: COLORS.PRIMARY,
-    borderRadius: 12,
-    paddingVertical: 18,
-    marginTop: 40,
+    borderRadius: BORDER_RADIUS.LG,
+    paddingVertical: SPACING.LG,
     alignItems: 'center',
+    marginTop: SPACING.XL,
   },
-  buttonDisabled: {
-    backgroundColor: '#F5F5F5',
+  submitButtonDisabled: {
+    backgroundColor: COLORS.GRAY_LIGHT,
     opacity: 0.6,
   },
-  buttonText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  buttonTextDisabled: {
-    color: '#C0C0C0',
+  submitButtonText: {
+    fontSize: FONT_SIZES.LG,
+    fontWeight: 'bold',
+    color: COLORS.WHITE,
   },
 });

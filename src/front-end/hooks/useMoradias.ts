@@ -8,6 +8,7 @@ interface UseMoradiasReturn {
   loading: boolean;
   error: any; // Permitir qualquer tipo, ErrorMessage vai tratar
   refreshMoradias: () => Promise<void>;
+  fetchByDono: (donoId: number) => Promise<Moradia[]>;
   createMoradia: (moradiaData: Partial<Moradia>) => Promise<{ success: boolean; message?: string; data?: Moradia }>;
   updateMoradia: (id: number, moradiaData: Partial<Moradia>) => Promise<{ success: boolean; message?: string }>;
   deleteMoradia: (id: number) => Promise<{ success: boolean; message?: string }>;
@@ -41,6 +42,18 @@ export const useMoradias = (): UseMoradiasReturn => {
   const refreshMoradias = useCallback(async () => {
     await fetchMoradias();
   }, [fetchMoradias]);
+
+  const fetchByDono = useCallback(async (donoId: number) => {
+    try {
+      const response = await HttpService.get<Moradia[]>(API_CONFIG.ENDPOINTS.MORADIAS.BY_DONO(donoId));
+      if (response.ok && response.data) {
+        return response.data;
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  }, []);
 
   const createMoradia = useCallback(async (moradiaData: Partial<Moradia>) => {
     try {
@@ -109,7 +122,8 @@ export const useMoradias = (): UseMoradiasReturn => {
     moradias,
     loading,
     error,
-    refreshMoradias,
+  refreshMoradias,
+  fetchByDono,
     createMoradia,
     updateMoradia,
     deleteMoradia,

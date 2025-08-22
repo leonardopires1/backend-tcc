@@ -49,6 +49,13 @@ export default function Home({ navigation }: { navigation: any }) {
       color: '#2196F3',
     },
     {
+      icon: 'home' as keyof typeof Ionicons.glyphMap,
+      title: 'Minhas Moradias',
+      description: 'Gerencie as moradias que você cadastrou',
+      onPress: () => navigation.navigate('MinhasMoradias'),
+      color: '#FF9800',
+    },
+    {
       icon: 'person' as keyof typeof Ionicons.glyphMap,
       title: 'Meu Perfil',
       description: 'Gerencie suas informações',

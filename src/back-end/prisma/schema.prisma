@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -16,31 +16,32 @@ model Usuario {
   telefone           String             @unique
   genero             String
   criadoEm           DateTime           @default(now())
+  moradiasDono       Moradia?           @relation("DonoMoradia") // Relacionamento para moradia onde é dono (um-para-um)
   moradia            Moradia?           @relation("UsuarioMoradia", fields: [moradiaId], references: [id]) // Relacionamento com a moradia
   moradiaId          Int? // Referência para a moradia
   atribuicoesTarefas AtribuicaoTarefa[]
   despesasUsuario    DespesaUsuario[]
-  moradiaDono        Moradia?           @relation("Donomoradia") // Relacionamento inverso para dono da moradia
   moradias           Moradia[]          @relation("Moradores") // Relacionamento inverso para moradores
   resetToken         String?
   resetTokenExp      DateTime?
-  avatarUrl             String? // Campo para armazenar o nome do arquivo do avatar
+  avatarUrl          String? // Campo para armazenar o nome do arquivo do avatar
 }
 
 model Moradia {
-  id            Int             @id @default(autoincrement())
-  nome          String
-  descricao     String          @default("Moradia compartilhada")
-  endereco      String?
-  criadoEm      DateTime        @default(now())
-  dono          Usuario?        @relation("Donomoradia", fields: [donoId], references: [id]) // Relacionamento com o dono
-  donoId        Int?            @unique // Referência única ao dono
-  moradores     Usuario[]       @relation("Moradores") // Relacionamento com vários usuários morando na mesma moradia
-  usuarios      Usuario[]       @relation("UsuarioMoradia") // Relacionamento inverso para moradia em Usuario
-  tarefas       Tarefa[]
-  despesas      Despesa[]
-  regrasMoradia RegrasMoradia[]
-  comodidades   Comodidades[]
+  id               Int             @id @default(autoincrement())
+  nome             String
+  descricao        String          @default("Moradia compartilhada")
+  endereco         String?
+  criadoEm         DateTime        @default(now())
+  valorMensalidade Float
+  dono             Usuario?        @relation("DonoMoradia", fields: [donoId], references: [id]) // Relacionamento com o dono (um-para-muitos)
+  donoId           Int?            @unique // Referência ao dono (cada usuário pode ser dono de apenas uma moradia)
+  moradores        Usuario[]       @relation("Moradores") // Relacionamento com vários usuários morando na mesma moradia
+  usuarios         Usuario[]       @relation("UsuarioMoradia") // Relacionamento inverso para moradia em Usuario
+  tarefas          Tarefa[]
+  despesas         Despesa[]
+  regrasMoradia    RegrasMoradia[]
+  comodidades      Comodidades[]
 }
 
 model Tarefa {

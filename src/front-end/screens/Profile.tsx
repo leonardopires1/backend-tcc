@@ -135,8 +135,8 @@ export const Profile = ({ navigation }: { navigation: any }) => {
           </Text>
 
           <Text style={styles.statusMessage}>
-            {user?.moradiaDono && user.moradiaDono.length > 0
-              ? `Você é dono de ${user.moradiaDono.length} moradias`
+            {user?.moradiasDono && user.moradiasDono.length > 0
+              ? `Você é dono de ${user.moradiasDono.length} moradias`
               : "Você ainda não tem moradia cadastrada."}
           </Text>
         </View>

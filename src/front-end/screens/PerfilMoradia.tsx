@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,13 @@ import {
 import Moradia from "../types/Moradia";
 import { Ionicons } from "@expo/vector-icons";
 import { useMoradias } from "../hooks/useMoradias";
+import { useComodidades } from "../hooks/useComodidades";
+import { useAuth } from "../contexts/AuthContext";
+import AddRegraComodidadeModal from "../components/AddRegraComodidadeModal";
+import SelectRegrasModal from "../components/SelectRegrasModal";
+import { useRegras } from "../hooks/useRegras";
+import HttpService from "../services/httpService";
+import API_CONFIG from "../config/apiConfig";
 
 export default function PerfilMoradia({
   route,
@@ -28,21 +35,86 @@ export default function PerfilMoradia({
   console.log("Dados recebidos:", { moradia, id, moradiaId });
 
   const { moradias } = useMoradias();
+  const { user } = useAuth();
   const [dataMoradia, setDataMoradia] = useState<Moradia | undefined>(moradia);
-  const [tarefasModalVisible, setTarefasModalVisible] = useState(false);
+  const [donoMoradia, setDonoMoradia] = useState<boolean>(false);
+  const [modalVisible, setModalVisible] = useState(false); // modal antigo (comodidade/regra manual)
+  const [modalRegrasVisible, setModalRegrasVisible] = useState(false); // seleção de regras pré-definidas
+  const [updating, setUpdating] = useState(false);
+  const { comodidades, addComodidade, removeComodidade, fetchComodidades } =
+    useComodidades(moradiaId);
+  const { regras, regrasVinculadas, loading: loadingRegras, loadingVinculadas, fetchRegrasVinculadas, vincularRegra, desvincularRegra } = useRegras();
 
+  // Carrega a moradia (direta ou por id)
   useEffect(() => {
     if (moradia) {
-      // Se a moradia foi passada diretamente, usar ela
       setDataMoradia(moradia);
-      console.log("Usando moradia passada diretamente:", moradia);
-    } else if (moradiaId && moradias.length > 0) {
-      // Senão, buscar pela ID
+      return;
+    }
+    if (moradiaId && moradias.length > 0) {
       const moradiaEncontrada = moradias.find((m) => m.id === moradiaId);
       setDataMoradia(moradiaEncontrada);
-      console.log("Moradia encontrada por ID:", moradiaEncontrada);
     }
   }, [moradia, moradiaId, moradias]);
+
+  const avaliarDono = useCallback(() => {
+    const donoFromId = !!(dataMoradia?.donoId && user?.id && dataMoradia.donoId === user.id);
+    const donoFromObject = !!(dataMoradia?.dono?.id && user?.id && dataMoradia.dono?.id === user.id);
+    const isOwner = donoFromId || donoFromObject;
+    setDonoMoradia(isOwner);
+    if (__DEV__) {
+      console.log('[PerfilMoradia] avaliarDono', { moradiaId: dataMoradia?.id, donoId: dataMoradia?.donoId, donoObj: dataMoradia?.dono, userId: user?.id, isOwner });
+    }
+  }, [dataMoradia?.donoId, dataMoradia?.dono, user?.id]);
+
+  useEffect(() => {
+    avaliarDono();
+  }, [avaliarDono]);
+
+  // Handlers para adicionar regras e comodidades
+  // Adição de regras antigas (livre) - mantida caso queira usar
+  const handleAddRegra = async (texto: string) => {
+    if (!dataMoradia) return;
+    // Aqui poderia haver endpoint diferente caso exista cadastro manual de regras; mantido para compatibilidade
+    setDataMoradia((prev) =>
+      prev ? { ...prev, regras: [...(prev.regras || []), texto] } : prev
+    );
+  };
+
+  // Carrega regras vinculadas quando tiver moradia
+  useEffect(() => {
+    if (dataMoradia?.id) {
+      fetchRegrasVinculadas(dataMoradia.id);
+    }
+  }, [dataMoradia?.id]);
+
+  const handleSelectRegra = async (regraId: number) => {
+    if (!dataMoradia || regrasVinculadas.some(r => r.regraId === regraId)) return;
+    setUpdating(true);
+    await vincularRegra(dataMoradia.id, regraId);
+    setUpdating(false);
+  };
+
+  const handleRemoveRegra = async (regraId: number) => {
+    if (!dataMoradia) return;
+    setUpdating(true);
+    await desvincularRegra(dataMoradia.id, regraId);
+    setUpdating(false);
+  };
+
+  const handleAddComodidade = async (texto: string) => {
+    if (!dataMoradia) return;
+    setUpdating(true);
+    await addComodidade(dataMoradia.id, texto, "");
+    setUpdating(false);
+  };
+
+  const handleRemoveComodidade = async (idComodidade: number) => {
+    if (updating) return;
+    setUpdating(true);
+    await removeComodidade(idComodidade);
+    setUpdating(false);
+  };
 
   // Se não há moradia nem ID, mostrar erro
   if (!moradia && !moradiaId) {
@@ -68,15 +140,11 @@ export default function PerfilMoradia({
       <ScrollView style={styles.scrollView}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton}>
-            <Ionicons
-              onPress={() => navigation.navigate("BuscarMoradia")}
-              name="chevron-back"
-              size={24}
-              color="black"
-            />
+          <TouchableOpacity style={styles.unifiedBackBtn} onPress={() => navigation.goBack()}>
+            <Ionicons name="chevron-back" size={22} color="#2563eb" />
+            <Text style={styles.unifiedBackText}>Voltar</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Ver outras repúblicas</Text>
+          <View style={{ flex:1 }} />
           <TouchableOpacity style={styles.heartButton}>
             <Text style={styles.heartIcon}>♡</Text>
           </TouchableOpacity>
@@ -101,57 +169,86 @@ export default function PerfilMoradia({
             {dataMoradia?.descricao || "Descrição da república"}
           </Text>
 
-          {/* Administrator
-          <View style={styles.adminContainer}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {dataMoradia?.dono?.nome
-                  ? dataMoradia.dono.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase()
-                  : 'AB'}
-              </Text>
-            </View>
-            <View style={styles.adminInfo}>
-              <Text style={styles.adminName}>
-                Proprietário: {dataMoradia?.dono?.nome || 'Nome do dono'}
-              </Text>
-            </View>
-          </View> */}
-
           {/* Rules and Amenities */}
           <Text style={styles.sectionTitle}>Regras e comodidades</Text>
-          
-          {/* Botão para gerenciar tarefas */}
-          <TouchableOpacity 
-            style={styles.manageTarefasButton} 
-          >
-            <Text style={styles.manageTarefasText}>📋 Gerenciar tarefas da moradia</Text>
-            <Text style={styles.manageTarefasArrow}>→</Text>
-          </TouchableOpacity>
-          
-          {dataMoradia?.comodidades ? (
-            dataMoradia.comodidades.map((item: string, idx: number) => (
-              <View style={styles.amenityItem} key={idx}>
-                <View style={styles.amenityIcon}>
-                  <Text style={styles.checkIcon}>✓</Text>
-                </View>
-                <Text style={styles.amenityText}>{item}</Text>
-              </View>
-            ))
-          ) : (
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.contactButton}>
-                <Text style={styles.contactButtonText}>Adicionar regra ou comodidade</Text>
+
+          {donoMoradia && (
+            <View style={{ marginBottom: 16 }}>
+              <TouchableOpacity
+                style={styles.contactButton}
+                onPress={() => setModalVisible(true)}
+                disabled={updating}
+              >
+                <Text style={styles.contactButtonText}>
+                  {updating ? "Atualizando..." : "Adicionar comodidade"}
+                </Text>
+              </TouchableOpacity>
+              <View style={{ height: 12 }} />
+              <TouchableOpacity
+                style={styles.contactButton}
+                onPress={() => setModalRegrasVisible(true)}
+                disabled={updating}
+              >
+                <Text style={styles.contactButtonText}>
+                  {updating ? "Atualizando..." : "Vincular regra pré-definida"}
+                </Text>
               </TouchableOpacity>
             </View>
           )}
-          {dataMoradia?.regras?.map((item: string, idx: number) => (
-            <View style={styles.amenityItem} key={idx}>
-              <View style={styles.amenityIcon}>
-                <Text style={styles.checkIcon}>✓</Text>
+
+          {/* Comodidades (via hook) */}
+          {comodidades.length ? (
+            comodidades.map((c) => (
+              <View style={styles.amenityItem} key={`comodidade-${c.id}`}>
+                <View style={styles.amenityIcon}>
+                  <Text style={styles.checkIcon}>✓</Text>
+                </View>
+                <Text style={[styles.amenityText, { flex: 1 }]}>{c.nome}</Text>
+                {donoMoradia && (
+                  <TouchableOpacity
+                    style={styles.removeButton}
+                    onPress={() => handleRemoveComodidade(c.id)}
+                    disabled={updating}
+                  >
+                    <Ionicons name="trash-outline" size={20} color="#dc2626" />
+                  </TouchableOpacity>
+                )}
               </View>
-              <Text style={styles.amenityText}>{item}</Text>
+            ))
+          ) : (
+            null
+          )}
+
+          {/* Regras vinculadas */}
+          {loadingVinculadas ? (
+            <Text style={{ color: '#666', marginBottom: 16 }}>Carregando regras...</Text>
+          ) : (
+            regrasVinculadas.map(rv => (
+              <View style={styles.amenityItem} key={`regra-${rv.regraId}`}>
+                <View style={[styles.amenityIcon, { backgroundColor: '#2563eb' }] }>
+                  <Text style={styles.checkIcon}>R</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.amenityText}>{rv.titulo}</Text>
+                  {rv.descricao ? <Text style={{ fontSize: 12, color: '#666' }}>{rv.descricao}</Text> : null}
+                </View>
+                {donoMoradia && (
+                  <TouchableOpacity style={styles.removeButton} onPress={() => handleRemoveRegra(rv.regraId)} disabled={updating}>
+                    <Ionicons name="close-circle-outline" size={20} color="#dc2626" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            ))
+          )}
+
+          {/* Empty state para visitante */}
+          {!donoMoradia && !updating && !loadingVinculadas && comodidades.length === 0 && regrasVinculadas.length === 0 && (
+            <View style={styles.emptyBox}>
+              <Ionicons name="alert-circle-outline" size={28} color="#6b7280" style={{ marginBottom: 8 }} />
+              <Text style={styles.emptyTitle}>Nada por aqui ainda</Text>
+              <Text style={styles.emptySubtitle}>Esta república ainda não cadastrou regras ou comodidades.</Text>
             </View>
-          ))}
+          )}
 
           {/* Rooms */}
 
@@ -174,6 +271,25 @@ export default function PerfilMoradia({
           <Text style={styles.contactButtonText}>Entrar em contato</Text>
         </TouchableOpacity>
       </View>
+      {donoMoradia && (
+        <>
+          <AddRegraComodidadeModal
+            visible={modalVisible}
+            onClose={() => setModalVisible(false)}
+            onAddRegra={handleAddRegra}
+            onAddComodidade={handleAddComodidade}
+          />
+          <SelectRegrasModal
+            visible={modalRegrasVisible}
+            onClose={() => setModalRegrasVisible(false)}
+            regras={regras}
+            loading={loadingRegras}
+            // SelectRegrasModal espera number[]
+            selectedIds={regrasVinculadas.map(r => r.regraId)}
+            onSelect={handleSelectRegra}
+          />
+        </>
+      )}
 
       {/* Modal de Tarefas
       {dataMoradia && (
@@ -197,13 +313,47 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: "#ffffff",
-    marginTop: 25,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingTop: 16,
+    paddingBottom: 8,
+    backgroundColor: '#ffffff',
+  },
+  unifiedBackBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eef5ff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#dbeafe'
+  },
+  unifiedBackText: {
+    color: '#2563eb',
+    fontWeight: '600',
+    marginLeft: 4,
+    fontSize: 14
+  },
+  emptyBox: {
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 24
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#334155',
+    marginBottom: 4
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    color: '#64748b',
+    textAlign: 'center'
   },
   backButton: {
     padding: 8,
@@ -416,5 +566,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#2563eb",
     fontWeight: "bold",
+  },
+  removeButton: {
+    padding: 6,
   },
 });

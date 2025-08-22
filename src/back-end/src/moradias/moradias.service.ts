@@ -26,6 +26,7 @@ export class MoradiasService {
       nome,
       endereco,
       donoId,
+      valorMensalidade,
       moradoresIds = [],
       tarefas = [],
       despesas = [],
@@ -40,6 +41,17 @@ export class MoradiasService {
     if (!dono) {
       throw new HttpException(
         'Usuário donoId não encontrado.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    // Verifica se o usuário já possui uma moradia como dono
+    const moradiaExistente = await this.prisma.moradia.findFirst({
+      where: { donoId: donoId },
+    });
+    if (moradiaExistente) {
+      throw new HttpException(
+        'Este usuário já é dono de uma moradia. Cada usuário pode ser dono de apenas uma moradia.',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -66,6 +78,7 @@ export class MoradiasService {
       data: {
         nome,
         endereco,
+        valorMensalidade,
         dono: { connect: { id: donoId } },
         tarefas: {
           create: tarefas.map((tarefa) => ({
@@ -164,6 +177,7 @@ export class MoradiasService {
         nome: true,
         descricao: true,
         endereco: true,
+        valorMensalidade: true,
         dono: { select: { id: true, nome: true, email: true } },
         moradores: { 
           select: { 
@@ -181,6 +195,27 @@ export class MoradiasService {
     });
   }
 
+  async findAllByDono(donoId: number) {
+    // Como cada usuário pode ser dono de apenas uma moradia, usamos findFirst
+    const moradia = await this.prisma.moradia.findFirst({
+      where: { donoId },
+      select: {
+        id: true,
+        nome: true,
+        descricao: true,
+        endereco: true,
+        valorMensalidade: true,
+        dono: { select: { id: true, nome: true, email: true } },
+        moradores: {
+          select: { id: true, nome: true, email: true }
+        }
+      }
+    });
+    
+    // Retorna um array para manter compatibilidade com a API existente
+    return moradia ? [moradia] : [];
+  }
+
   async findOne(id: number) {
     const moradia = await this.prisma.moradia.findUnique({
       where: { id },
@@ -189,6 +224,7 @@ export class MoradiasService {
         nome: true,
         endereco: true,
         descricao: true,
+        valorMensalidade: true,
         regrasMoradia: true,
         comodidades: true,
         dono: { select: { id: true, nome: true, email: true } },
@@ -216,11 +252,12 @@ export class MoradiasService {
   }
 
   async update(id: number, updateMoradiaDto: UpdateMoradiaDto) {
-    const { nome, endereco, donoId } = updateMoradiaDto;
+    const { nome, endereco, donoId, valorMensalidade } = updateMoradiaDto;
 
     const data: Prisma.MoradiaUpdateInput = {
       ...(nome && { nome }),
       ...(endereco && { endereco }),
+      ...(valorMensalidade && { valorMensalidade }),
       ...(donoId && { dono: { connect: { id: donoId } } }),
     };
 
@@ -232,6 +269,7 @@ export class MoradiasService {
           id: true,
           nome: true,
           endereco: true,
+          valorMensalidade: true,
           dono: { select: { id: true, nome: true, email: true } },
         },
       });

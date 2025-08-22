@@ -105,6 +105,10 @@ export const ForgotPasswordContent: React.FC<ForgotPasswordProps> = ({ navigatio
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
+          <TouchableOpacity style={styles.unifiedBackBtn} onPress={() => navigation?.goBack()}>
+            <Text style={styles.unifiedBackIcon}>‹</Text>
+            <Text style={styles.unifiedBackText}>Voltar</Text>
+          </TouchableOpacity>
           <Text style={styles.title}>
             {step === 'email' ? '🔐 Esqueceu a Senha?' : '🔑 Redefinir Senha'}
           </Text>
@@ -274,6 +278,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 30,
   },
+  unifiedBackBtn: {
+    position: 'absolute',
+    left: 0,
+    top: -4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eef5ff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#dbeafe'
+  },
+  unifiedBackIcon: { color: '#2563eb', fontSize: 18, fontWeight: '600' },
+  unifiedBackText: { color: '#2563eb', fontSize: 14, fontWeight: '600', marginLeft: 4 },
   title: {
     fontSize: 28,
     fontWeight: 'bold',

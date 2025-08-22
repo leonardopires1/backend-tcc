@@ -158,10 +158,11 @@ export default function Cadastro({ navigation }: { navigation: any }) {
       >
         <View style={styles.header}>
           <TouchableOpacity 
-            style={styles.backButton}
+            style={styles.unifiedBackBtn}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="chevron-back" size={24} color={COLORS.PRIMARY} />
+            <Ionicons name="chevron-back" size={20} color={COLORS.PRIMARY} />
+            <Text style={styles.unifiedBackText}>Voltar</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Criar Conta</Text>
           <View style={styles.placeholder} />
@@ -374,8 +375,21 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.LG,
     paddingTop: SPACING.XXL,
   },
-  backButton: {
-    padding: SPACING.SM,
+  unifiedBackBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eef5ff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#dbeafe'
+  },
+  unifiedBackText: {
+    color: COLORS.PRIMARY,
+    fontWeight: '600',
+    marginLeft: 4,
+    fontSize: 14
   },
   title: {
     fontSize: FONT_SIZES.XXL,

@@ -11,7 +11,7 @@ interface User {
   telefone: string;
   genero: string;
   moradiaId?: number;
-  moradiaDono?: {
+  moradiasDono?: {
     id: number;
     nome: string;
     endereco: string;

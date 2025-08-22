@@ -89,13 +89,9 @@ export default function BuscarMoradia({ navigation }: { navigation: any }) {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
-          <Ionicons
-            onPress={() => navigation.navigate("Home")}
-            name="chevron-back"
-            size={24}
-            color="black"
-          />
+        <TouchableOpacity style={styles.unifiedBackBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="chevron-back" size={20} color="#2563eb" />
+          <Text style={styles.unifiedBackText}>Voltar</Text>
         </TouchableOpacity>
         <View style={styles.locationContainer}>
           <Text style={styles.locationText}>{userLocation}</Text>
@@ -178,8 +174,21 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
   },
-  backButton: {
-    padding: 8,
+  unifiedBackBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eef5ff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#dbeafe'
+  },
+  unifiedBackText: {
+    color: '#2563eb',
+    fontWeight: '600',
+    marginLeft: 4,
+    fontSize: 14
   },
   locationContainer: {
     flex: 1,

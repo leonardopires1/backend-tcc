@@ -29,13 +29,20 @@ async function bootstrap() {
     disableErrorMessages: false, // Habilitado para debugging
     exceptionFactory: (errors) => {
       console.log('🚨 Validation errors:', JSON.stringify(errors, null, 2));
+      const detailedErrors = errors.map(error => ({
+        field: error.property,
+        value: error.value,
+        constraints: error.constraints,
+        children: error.children?.map(child => ({
+          field: child.property,
+          value: child.value,
+          constraints: child.constraints,
+        }))
+      }));
+      console.log('📋 Detailed validation errors:', JSON.stringify(detailedErrors, null, 2));
       return new BadRequestException({
         message: 'Dados de entrada inválidos',
-        errors: errors.map(error => ({
-          field: error.property,
-          constraints: error.constraints,
-          value: error.value,
-        })),
+        errors: detailedErrors,
       });
     },
   }));

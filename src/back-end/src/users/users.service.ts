@@ -122,7 +122,7 @@ export class UsersService {
         id: true,
         nome: true,
         email: true,
-        moradiaDono: {
+        moradiasDono: {
           select: {
             id: true,
             nome: true,
@@ -141,7 +141,7 @@ export class UsersService {
         nome: true,
         email: true,
         senha: true,
-        moradiaDono: {
+        moradiasDono: {
           select: {
             id: true,
             nome: true,
@@ -166,7 +166,7 @@ export class UsersService {
           telefone: true,
           genero: true,
           criadoEm: true,
-          moradiaDono: {
+          moradiasDono: {
             select: {
               id: true,
               nome: true,

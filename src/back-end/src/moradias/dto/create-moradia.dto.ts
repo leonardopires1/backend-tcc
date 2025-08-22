@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber, IsOptional, IsArray } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional, IsArray, IsPositive } from 'class-validator';
 
 export class CreateMoradiaDto {
   @IsString()
@@ -11,6 +11,11 @@ export class CreateMoradiaDto {
 
   @IsNumber()
   donoId: number;
+
+  @IsNumber()
+  @IsPositive()
+  @IsNotEmpty()
+  valorMensalidade: number;
 
   @IsOptional()
   @IsArray()

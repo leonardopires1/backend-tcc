@@ -35,6 +35,17 @@ export class RegraMoradiaService {
     });
   }
 
+  findByMoradia(idMoradia: number) {
+    return this.prisma.regrasMoradia.findMany({
+      where: { moradiaId: idMoradia },
+      include: {
+        regra: {
+          select: { id: true, titulo: true, descricao: true },
+        },
+      },
+    });
+  }
+
   deleteRegraMoradia(idMoradia: number, idRegra: number) {
     return this.prisma.regrasMoradia.deleteMany({
       where: {
