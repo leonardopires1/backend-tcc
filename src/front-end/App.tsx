@@ -16,6 +16,7 @@ import PerfilMoradia from "./screens/PerfilMoradia";
 import MinhasMoradias from "./screens/MinhasMoradias";
 import { Profile } from "./screens/Profile";
 import ForgotPassword from "./screens/ForgotPassword";
+import RepublicaDashboard from "./screens/MoradiaDashboard";
 
 const Stack = createNativeStackNavigator();
 
@@ -50,6 +51,7 @@ const AppNavigator = () => {
             <Stack.Screen name="PerfilMoradia" component={PerfilMoradia} />
             <Stack.Screen name="MinhasMoradias" component={MinhasMoradias} />
             <Stack.Screen name="Profile" component={Profile} />
+            <Stack.Screen name="RepublicaDashboard" component={RepublicaDashboard} />
             <Stack.Screen name="BoasVindas" component={BoasVindas} />
           </>
         ) : (

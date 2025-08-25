@@ -100,6 +100,7 @@ export const useTarefas = (moradiaId?: number) => {
     loading,
     error,
     loadTarefas,
+    refreshTarefas: loadTarefas, // Alias para refresh
     createTarefa,
     updateTarefa,
     deleteTarefa,

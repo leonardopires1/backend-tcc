@@ -3,28 +3,65 @@ import {
   StyleSheet,
   View,
   Text,
-  Image,
   TouchableOpacity,
   StatusBar,
   ScrollView,
   Alert,
+  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React from "react";
 import { useAuth } from "../contexts/AuthContext";
 
-// callback de seleção
-interface ImageAsset {
-  uri: string;
-  fileName?: string;
-  type: string;
+const { width } = Dimensions.get('window');
+
+interface ProfileOptionProps {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  subtitle?: string;
+  onPress: () => void;
+  color?: string;
+  showChevron?: boolean;
 }
 
-interface ImagePickerResponse {
-  didCancel?: boolean;
-  errorCode?: string;
-  assets?: ImageAsset[];
+const ProfileOption: React.FC<ProfileOptionProps> = ({
+  icon,
+  title,
+  subtitle,
+  onPress,
+  color = "#666",
+  showChevron = true,
+}) => (
+  <TouchableOpacity style={styles.optionCard} onPress={onPress} activeOpacity={0.7}>
+    <View style={[styles.optionIconContainer, { backgroundColor: color + '15' }]}>
+      <Ionicons name={icon} size={22} color={color} />
+    </View>
+    <View style={styles.optionContent}>
+      <Text style={styles.optionTitle}>{title}</Text>
+      {subtitle && <Text style={styles.optionSubtitle}>{subtitle}</Text>}
+    </View>
+    {showChevron && <Ionicons name="chevron-forward" size={20} color="#CCC" />}
+  </TouchableOpacity>
+);
+
+interface InfoCardProps {
+  title: string;
+  value: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
 }
+
+const InfoCard: React.FC<InfoCardProps> = ({ title, value, icon, color }) => (
+  <View style={styles.infoCard}>
+    <View style={[styles.infoIconContainer, { backgroundColor: color + '15' }]}>
+      <Ionicons name={icon} size={20} color={color} />
+    </View>
+    <View style={styles.infoContent}>
+      <Text style={styles.infoTitle}>{title}</Text>
+      <Text style={styles.infoValue}>{value}</Text>
+    </View>
+  </View>
+);
 
 export const Profile = ({ navigation }: { navigation: any }) => {
   const { user, logout } = useAuth();
@@ -49,14 +86,6 @@ export const Profile = ({ navigation }: { navigation: any }) => {
     ]);
   };
 
-  const handleCadastrarMoradia = () => {
-    navigation.navigate("CadastrarMoradia");
-  };
-
-  const handleProcurarRepublica = () => {
-    navigation.navigate("BuscarMoradia");
-  };
-
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -66,140 +95,207 @@ export const Profile = ({ navigation }: { navigation: any }) => {
       .substring(0, 2);
   };
 
+  const formatCpf = (cpf: string) => {
+    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.***.***-$4");
+  };
+
+  const formatPhone = (phone: string) => {
+    if (phone.length === 11) {
+      return phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+    } else if (phone.length === 10) {
+      return phone.replace(/(\d{2})(\d{4})(\d{4})/, "($1) $2-$3");
+    }
+    return phone;
+  };
+
+  const getStatusInfo = () => {
+    if (user?.moradiaId) {
+      return {
+        status: "Membro de República",
+        description: "Você faz parte de uma república",
+        color: "#4CAF50",
+        icon: "home" as keyof typeof Ionicons.glyphMap
+      };
+    } else if (user?.moradiasDono && user.moradiasDono.length > 0) {
+      return {
+        status: "Proprietário",
+        description: `Dono de ${user.moradiasDono.length} moradia${user.moradiasDono.length > 1 ? 's' : ''}`,
+        color: "#FF9800",
+        icon: "business" as keyof typeof Ionicons.glyphMap
+      };
+    } else {
+      return {
+        status: "Sem República",
+        description: "Procure ou cadastre uma moradia",
+        color: "#999",
+        icon: "search" as keyof typeof Ionicons.glyphMap
+      };
+    }
+  };
+
+  const statusInfo = getStatusInfo();
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#076df2" />
+      <StatusBar barStyle="light-content" backgroundColor="#0073FF" />
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Blue header with curved bottom */}
-        <View style={styles.header}>
-          {/* Curved bottom shape */}
-          <View style={styles.curveContainer}>
-            <View style={styles.curve} />
-          </View>
+      {/* Header com gradiente */}
+      <View style={styles.header}>
+        <View style={styles.headerContent}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#FFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Meu Perfil</Text>
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+            <Ionicons name="log-out-outline" size={24} color="#FFF" />
+          </TouchableOpacity>
         </View>
+      </View>
 
-        {/* Profile picture */}
-        <View style={styles.profileImageContainer}>
-          <View style={styles.avatarFallback}>
-            <Text style={styles.avatarText}>
-              {user?.nome ? getInitials(user.nome) : "US"}
-            </Text>
-          </View>
-        </View>
-
-        {/* Profile information */}
-        <View style={styles.profileInfo}>
-          <Text style={styles.profileName}>{user?.nome || "Usuário"}</Text>
-          <Text style={styles.profileEmail}>
-            {user?.email || "email@exemplo.com"}
-          </Text>
-
-          {user?.telefone && (
-            <View style={styles.infoRow}>
-              <Ionicons name="call-outline" size={16} color="#666" />
-              <Text style={styles.infoText}>{user.telefone}</Text>
-            </View>
-          )}
-
-          {user?.cpf && (
-            <View style={styles.infoRow}>
-              <Ionicons name="card-outline" size={16} color="#666" />
-              <Text style={styles.infoText}>
-                CPF:{" "}
-                {user.cpf.replace(
-                  /(\d{3})(\d{3})(\d{3})(\d{2})/,
-                  "$1.***.***-$4"
-                )}
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Profile Card */}
+        <View style={styles.profileCard}>
+          <View style={styles.avatarContainer}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {user?.nome ? getInitials(user.nome) : "US"}
               </Text>
             </View>
-          )}
+          </View>
 
-          {user?.genero && (
-            <View style={styles.infoRow}>
-              <Ionicons name="person-outline" size={16} color="#666" />
-              <Text style={styles.infoText}>
-                {user.genero === "M"
-                  ? "Masculino"
-                  : user.genero === "F"
-                  ? "Feminino"
-                  : user.genero}
+          <View style={styles.profileInfo}>
+            <Text style={styles.profileName}>{user?.nome || "Usuário"}</Text>
+            <Text style={styles.profileEmail}>{user?.email || "email@exemplo.com"}</Text>
+            
+            {/* Status Badge */}
+            <View style={[styles.statusBadge, { backgroundColor: statusInfo.color + '15' }]}>
+              <Ionicons name={statusInfo.icon} size={16} color={statusInfo.color} />
+              <Text style={[styles.statusText, { color: statusInfo.color }]}>
+                {statusInfo.status}
               </Text>
             </View>
-          )}
-
-          <Text style={styles.statusMessage}>
-            {user?.moradiaId
-              ? `Você faz parte de uma moradia (ID: ${user.moradiaId})`
-              : "Você ainda não faz parte de nenhuma moradia."}
-          </Text>
-
-          <Text style={styles.statusMessage}>
-            {user?.moradiasDono && user.moradiasDono.length > 0
-              ? `Você é dono de ${user.moradiasDono.length} moradias`
-              : "Você ainda não tem moradia cadastrada."}
-          </Text>
-        </View>
-
-        {/* Action buttons */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.primaryButton}
-            activeOpacity={0.8}
-            onPress={handleCadastrarMoradia}
-          >
-            <Ionicons
-              name="home-outline"
-              size={20}
-              color="white"
-              style={styles.buttonIcon}
-            />
-            <Text style={styles.primaryButtonText}>Cadastrar Moradia</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.orText}>ou</Text>
-
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            activeOpacity={0.8}
-            onPress={handleProcurarRepublica}
-          >
-            <Ionicons
-              name="search-outline"
-              size={20}
-              color="#076df2"
-              style={styles.buttonIcon}
-            />
-            <Text style={styles.secondaryButtonText}>Procurar República</Text>
-          </TouchableOpacity>
-
-          {/* Additional options */}
-          <View style={styles.additionalOptions}>
-            <TouchableOpacity style={styles.optionButton} activeOpacity={0.7}>
-              <Ionicons name="person-outline" size={20} color="#666" />
-              <Text style={styles.optionText}>Editar Perfil</Text>
-              <Ionicons name="chevron-forward" size={16} color="#666" />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.optionButton} activeOpacity={0.7}>
-              <Ionicons name="notifications-outline" size={20} color="#666" />
-              <Text style={styles.optionText}>Notificações</Text>
-              <Ionicons name="chevron-forward" size={16} color="#666" />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.optionButton} activeOpacity={0.7}>
-              <Ionicons name="settings-outline" size={20} color="#666" />
-              <Text style={styles.optionText}>Configurações</Text>
-              <Ionicons name="chevron-forward" size={16} color="#666" />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.optionButton} activeOpacity={0.7}>
-              <Ionicons name="help-circle-outline" size={20} color="#666" />
-              <Text style={styles.optionText}>Ajuda</Text>
-              <Ionicons name="chevron-forward" size={16} color="#666" />
-            </TouchableOpacity>
           </View>
         </View>
+
+        {/* Informações Pessoais */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Informações Pessoais</Text>
+          <View style={styles.infoGrid}>
+            {user?.telefone && (
+              <InfoCard
+                title="Telefone"
+                value={formatPhone(user.telefone)}
+                icon="call"
+                color="#4CAF50"
+              />
+            )}
+            {user?.cpf && (
+              <InfoCard
+                title="CPF"
+                value={formatCpf(user.cpf)}
+                icon="card"
+                color="#2196F3"
+              />
+            )}
+            {user?.genero && (
+              <InfoCard
+                title="Gênero"
+                value={user.genero === "M" ? "Masculino" : user.genero === "F" ? "Feminino" : user.genero}
+                icon="person"
+                color="#9C27B0"
+              />
+            )}
+          </View>
+        </View>
+
+        {/* Status da Moradia */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Status de Moradia</Text>
+          <View style={styles.statusCard}>
+            <View style={[styles.statusIconContainer, { backgroundColor: statusInfo.color + '15' }]}>
+              <Ionicons name={statusInfo.icon} size={28} color={statusInfo.color} />
+            </View>
+            <View style={styles.statusContent}>
+              <Text style={styles.statusTitle}>{statusInfo.status}</Text>
+              <Text style={styles.statusDescription}>{statusInfo.description}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Ações Rápidas */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Ações Rápidas</Text>
+          <View style={styles.optionsContainer}>
+            <ProfileOption
+              icon="home-outline"
+              title="Cadastrar Moradia"
+              subtitle="Crie uma nova república"
+              onPress={() => navigation.navigate("CadastrarMoradia")}
+              color="#0073FF"
+            />
+            <ProfileOption
+              icon="search-outline"
+              title="Buscar Moradia"
+              subtitle="Encontre uma república"
+              onPress={() => navigation.navigate("BuscarMoradia")}
+              color="#4CAF50"
+            />
+            {user?.moradiaId && (
+              <ProfileOption
+                icon="people-outline"
+                title="Minha República"
+                subtitle="Acesse o painel da sua república"
+                onPress={() => navigation.navigate("RepublicaDashboard")}
+                color="#673AB7"
+              />
+            )}
+          </View>
+        </View>
+
+        {/* Configurações */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Configurações</Text>
+          <View style={styles.optionsContainer}>
+            <ProfileOption
+              icon="person-outline"
+              title="Editar Perfil"
+              subtitle="Atualize suas informações"
+              onPress={() => {/* TODO: Implementar */}}
+              color="#FF9800"
+            />
+            <ProfileOption
+              icon="notifications-outline"
+              title="Notificações"
+              subtitle="Gerencie suas preferências"
+              onPress={() => {/* TODO: Implementar */}}
+              color="#9C27B0"
+            />
+            <ProfileOption
+              icon="shield-checkmark-outline"
+              title="Privacidade e Segurança"
+              subtitle="Configurações de conta"
+              onPress={() => {/* TODO: Implementar */}}
+              color="#607D8B"
+            />
+            <ProfileOption
+              icon="help-circle-outline"
+              title="Ajuda e Suporte"
+              subtitle="Central de ajuda"
+              onPress={() => {/* TODO: Implementar */}}
+              color="#795548"
+            />
+          </View>
+        </View>
+
+        {/* Botão de Logout */}
+        <View style={styles.section}>
+          <TouchableOpacity style={styles.logoutCard} onPress={handleLogout} activeOpacity={0.7}>
+            <Ionicons name="log-out-outline" size={24} color="#F44336" />
+            <Text style={styles.logoutText}>Sair da Conta</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.bottomSpacing} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -208,190 +304,302 @@ export const Profile = ({ navigation }: { navigation: any }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
+    backgroundColor: "#F8F9FA",
   },
   header: {
-    backgroundColor: "#076df2",
-    paddingTop: 60,
-    paddingBottom: 40,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
+    backgroundColor: "#0073FF",
+    paddingTop: 40,
+    paddingBottom: 20,
   },
-  headerTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    width: "100%",
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
   },
+  backButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
   headerTitle: {
-    color: "white",
-    fontSize: 32,
-    fontWeight: "bold",
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFF',
     flex: 1,
-    textAlign: "center",
+    textAlign: 'center',
+    marginHorizontal: 16,
   },
   logoutButton: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
-  curveContainer: {
-    height: 50,
-    width: "100%",
-    position: "absolute",
-    bottom: -25,
-    overflow: "hidden",
+  scrollView: {
+    flex: 1,
   },
-  curve: {
-    backgroundColor: "#076df2",
-    height: 100,
-    width: "140%",
-    marginLeft: "-20%",
-    borderBottomLeftRadius: 300,
-    borderBottomRightRadius: 300,
-  },
-  profileImageContainer: {
-    alignSelf: "center",
-    marginTop: -60,
-    borderRadius: 80,
-    borderWidth: 4,
-    borderColor: "white",
-    overflow: "hidden",
+  profileCard: {
+    backgroundColor: '#FFF',
+    marginHorizontal: 20,
+    marginTop: -10,
+    borderRadius: 16,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
     elevation: 5,
-    shadowColor: "#000",
+  },
+  avatarContainer: {
+    marginBottom: 16,
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#0073FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
-  },
-  profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-  },
-  avatarFallback: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: "#076df2",
-    justifyContent: "center",
-    alignItems: "center",
+    elevation: 3,
   },
   avatarText: {
-    color: "white",
-    fontSize: 40,
-    fontWeight: "bold",
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#FFF',
   },
   profileInfo: {
-    alignItems: "center",
-    paddingHorizontal: 24,
-    marginTop: 16,
+    alignItems: 'center',
   },
   profileName: {
-    color: "#076df2",
-    fontSize: 28,
-    fontWeight: "bold",
-    textAlign: "center",
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
   },
   profileEmail: {
-    color: "#666",
     fontSize: 16,
-    textAlign: "center",
-    marginTop: 4,
+    color: '#666',
+    marginBottom: 12,
   },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
     marginTop: 8,
   },
-  infoText: {
-    color: "#666",
+  statusText: {
     fontSize: 14,
-    marginLeft: 8,
+    fontWeight: '600',
+    marginLeft: 6,
   },
-  statusMessage: {
-    color: "#666",
-    fontSize: 16,
-    textAlign: "center",
-    marginTop: 16,
-    fontStyle: "italic",
+  section: {
+    marginHorizontal: 20,
+    marginTop: 24,
   },
-  buttonContainer: {
-    paddingHorizontal: 24,
-    width: "100%",
-    alignItems: "center",
-    marginTop: 32,
-  },
-  primaryButton: {
-    backgroundColor: "#076df2",
-    borderRadius: 30,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    width: "100%",
-    alignItems: "center",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    flexDirection: "row",
-    justifyContent: "center",
-  },
-  primaryButtonText: {
-    color: "white",
+  sectionTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
   },
-  secondaryButton: {
-    backgroundColor: "white",
-    borderColor: "#076df2",
-    borderWidth: 2,
-    borderRadius: 30,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    width: "100%",
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
+  infoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
-  secondaryButtonText: {
-    color: "#076df2",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  buttonIcon: {
-    marginRight: 8,
-  },
-  orText: {
-    color: "#888",
-    fontSize: 16,
-    marginVertical: 16,
-  },
-  additionalOptions: {
-    width: "100%",
-    marginTop: 32,
-    backgroundColor: "#f8f9fa",
+  infoCard: {
+    backgroundColor: '#FFF',
     borderRadius: 12,
     padding: 16,
+    marginBottom: 12,
+    width: width * 0.42,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  infoIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  infoContent: {
+    alignItems: 'flex-start',
+  },
+  infoTitle: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  infoValue: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '600',
+  },
+  statusCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  statusIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  statusContent: {
+    flex: 1,
+  },
+  statusTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  statusDescription: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+  },
+  optionsContainer: {
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  optionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  optionIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  optionContent: {
+    flex: 1,
+  },
+  optionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 2,
+  },
+  optionSubtitle: {
+    fontSize: 14,
+    color: '#666',
+  },
+  logoutCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  logoutText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#F44336',
+    marginLeft: 12,
+  },
+  bottomSpacing: {
+    height: 40,
+  },
+  // Estilos antigos mantidos para compatibilidade (não utilizados no novo design)
+  headerTop: {
+    display: 'none',
+  },
+  curveContainer: {
+    display: 'none',
+  },
+  curve: {
+    display: 'none',
+  },
+  profileImageContainer: {
+    display: 'none',
+  },
+  profileImage: {
+    display: 'none',
+  },
+  avatarFallback: {
+    display: 'none',
+  },
+  infoRow: {
+    display: 'none',
+  },
+  infoText: {
+    display: 'none',
+  },
+  statusMessage: {
+    display: 'none',
+  },
+  buttonContainer: {
+    display: 'none',
+  },
+  primaryButton: {
+    display: 'none',
+  },
+  primaryButtonText: {
+    display: 'none',
+  },
+  secondaryButton: {
+    display: 'none',
+  },
+  secondaryButtonText: {
+    display: 'none',
+  },
+  buttonIcon: {
+    display: 'none',
+  },
+  orText: {
+    display: 'none',
+  },
+  additionalOptions: {
+    display: 'none',
   },
   optionButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-    backgroundColor: "white",
-    borderRadius: 8,
-    marginBottom: 8,
-    elevation: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
+    display: 'none',
   },
   optionText: {
-    flex: 1,
-    fontSize: 16,
-    color: "#333",
-    marginLeft: 12,
+    display: 'none',
   },
 });

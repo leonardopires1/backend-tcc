@@ -1,5 +1,5 @@
 const API_CONFIG = {
-  BASE_URL: "http://192.168.217.2:3000",
+  BASE_URL: "https://eq3.ini3b.projetoscti.com.br",
 
   ENDPOINTS: {
     AUTH: {
@@ -10,14 +10,16 @@ const API_CONFIG = {
     },
     USERS: {
       BASE: "/users",
-      PROFILE: "/users/profile",
+      PROFILE: "/auth/profile",
       UPDATE: "/users/update",
+      BY_CPF: (cpf: string) => `/users/cpf/${cpf}`,
     },
     MORADIAS: {
       BASE: "/moradias",
       BY_ID: (id: number) => `/moradias/${id}`,
       BY_USER: "/moradias/user",
       BY_DONO: (donoId: number) => `/moradias/dono/${donoId}`,
+      ADD_MEMBER: (moradiaId: number, usuarioId: number) => `/moradias/${moradiaId}/adicionar-membro/${usuarioId}`,
     },
     COMODIDADES: {
       BASE: "/comodidades-moradia",
@@ -36,7 +38,7 @@ const API_CONFIG = {
     },
   },
 
-  TIMEOUT: 15000, // 15 segundos (aumentado para evitar timeouts prematuros)
+  TIMEOUT: 150000, // 150 segundos (aumentado para evitar timeouts prematuros)
 };
 
 export default API_CONFIG;

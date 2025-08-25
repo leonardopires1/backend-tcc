@@ -13,7 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useMoradias } from "../hooks/useMoradias";
 import { useComodidades } from "../hooks/useComodidades";
 import { useAuth } from "../contexts/AuthContext";
-import AddRegraComodidadeModal from "../components/AddRegraComodidadeModal";
+import AddRegraComodidadeModal from "../components/AddRegraModal";
 import SelectRegrasModal from "../components/SelectRegrasModal";
 import { useRegras } from "../hooks/useRegras";
 import HttpService from "../services/httpService";

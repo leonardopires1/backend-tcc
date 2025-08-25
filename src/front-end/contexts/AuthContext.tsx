@@ -38,6 +38,7 @@ interface AuthContextType extends AuthState {
   register: (userData: any) => Promise<{ success: boolean; message?: string }>;
   updateProfile: (userData: Partial<User>) => Promise<{ success: boolean; message?: string }>;
   refreshToken: () => Promise<void>;
+  refreshUserData: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -246,6 +247,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const refreshUserData = async () => {
+    if (!state.user?.email) return;
+    
+    console.log('🔄 Refreshing user data...');
+    try {
+      const response = await HttpService.get(API_CONFIG.ENDPOINTS.USERS.PROFILE);
+      
+      if (response.ok && response.data) {
+        const updatedUser = response.data as User;
+        console.log('✅ User data refreshed:', { 
+          email: updatedUser.email, 
+          moradiaId: updatedUser.moradiaId 
+        });
+        await AsyncStorage.setItem('userData', JSON.stringify(updatedUser));
+        dispatch({ type: 'UPDATE_USER', payload: updatedUser });
+      } else {
+        console.log('❌ Error refreshing user data:', response.error);
+      }
+    } catch (error) {
+      console.error('💥 Exception refreshing user data:', error);
+    }
+  };
+
   const value: AuthContextType = {
     ...state,
     login,
@@ -253,6 +277,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     register,
     updateProfile,
     refreshToken,
+    refreshUserData,
   };
 
   return (

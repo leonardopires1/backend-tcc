@@ -23,6 +23,7 @@ CREATE TABLE "Moradia" (
     "descricao" TEXT NOT NULL DEFAULT 'Moradia compartilhada',
     "endereco" TEXT,
     "criadoEm" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "valorMensalidade" DOUBLE PRECISION NOT NULL,
     "donoId" INTEGER,
 
     CONSTRAINT "Moradia_pkey" PRIMARY KEY ("id")
@@ -121,6 +122,12 @@ CREATE UNIQUE INDEX "Usuario_telefone_key" ON "Usuario"("telefone");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Moradia_donoId_key" ON "Moradia"("donoId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Regras_titulo_key" ON "Regras"("titulo");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "RegrasMoradia_moradiaId_regraId_key" ON "RegrasMoradia"("moradiaId", "regraId");
 
 -- CreateIndex
 CREATE INDEX "_Moradores_B_index" ON "_Moradores"("B");

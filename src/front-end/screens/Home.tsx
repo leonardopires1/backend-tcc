@@ -33,6 +33,15 @@ export default function Home({ navigation }: { navigation: any }) {
     await logout();
   };
 
+  // Verifica se o usuário é membro de uma república
+  const isMembro = user?.moradiaId !== null && user?.moradiaId !== undefined;
+  
+  console.log('🏠 Home - User data:', { 
+    userId: user?.id, 
+    moradiaId: user?.moradiaId, 
+    isMembro 
+  });
+
   const quickActions = [
     {
       icon: 'search' as keyof typeof Ionicons.glyphMap,
@@ -55,6 +64,13 @@ export default function Home({ navigation }: { navigation: any }) {
       onPress: () => navigation.navigate('MinhasMoradias'),
       color: '#FF9800',
     },
+    ...(isMembro ? [{
+      icon: 'people' as keyof typeof Ionicons.glyphMap,
+      title: 'Minha Moradia',
+      description: 'Acesse o painel da sua república',
+      onPress: () => navigation.navigate("RepublicaDashboard"),
+      color: '#673AB7',
+    }] : []),
     {
       icon: 'person' as keyof typeof Ionicons.glyphMap,
       title: 'Meu Perfil',

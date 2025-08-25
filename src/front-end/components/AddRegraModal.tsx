@@ -9,12 +9,10 @@ interface Props {
   onAddComodidade: (texto: string) => Promise<void>;
 }
 
-export const AddRegraComodidadeModal: React.FC<Props> = ({ visible, onClose, onAddRegra, onAddComodidade }) => {
+export const AddRegraComodidadeModal: React.FC<Props> = ({ visible, onClose, onAddRegra }) => {
   const [regra, setRegra] = useState('');
-  const [comodidade, setComodidade] = useState('');
   const [loadingRegra, setLoadingRegra] = useState(false);
-  const [loadingComodidade, setLoadingComodidade] = useState(false);
-  const disable = loadingRegra || loadingComodidade;
+  const disable = loadingRegra;
 
   const handleAddRegra = async () => {
     if (!regra.trim() || disable) return;
@@ -24,13 +22,6 @@ export const AddRegraComodidadeModal: React.FC<Props> = ({ visible, onClose, onA
     setLoadingRegra(false);
   };
 
-  const handleAddComodidade = async () => {
-    if (!comodidade.trim() || disable) return;
-    setLoadingComodidade(true);
-    await onAddComodidade(comodidade.trim());
-    setComodidade('');
-    setLoadingComodidade(false);
-  };
 
   return (
     <Modal
@@ -42,7 +33,7 @@ export const AddRegraComodidadeModal: React.FC<Props> = ({ visible, onClose, onA
       <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.card}>
           <Text style={styles.title}>Gerenciar</Text>
-          <Text style={styles.subtitle}>Adicione novas regras ou comodidades</Text>
+          <Text style={styles.subtitle}>Adicione novas regras</Text>
 
             <View style={styles.section}>
               <Text style={styles.label}>Nova Regra</Text>
@@ -56,22 +47,6 @@ export const AddRegraComodidadeModal: React.FC<Props> = ({ visible, onClose, onA
                 />
                 <TouchableOpacity style={[styles.addBtn, (!regra.trim() || loadingRegra) && styles.addBtnDisabled]} disabled={!regra.trim() || loadingRegra} onPress={handleAddRegra}>
                   {loadingRegra ? <ActivityIndicator size="small" color={COLORS.WHITE} /> : <Text style={styles.addBtnText}>+</Text>}
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <View style={styles.section}>
-              <Text style={styles.label}>Nova Comodidade</Text>
-              <View style={styles.row}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ex: Wi-Fi 500mb"
-                  value={comodidade}
-                  onChangeText={setComodidade}
-                  editable={!disable}
-                />
-                <TouchableOpacity style={[styles.addBtn, (!comodidade.trim() || loadingComodidade) && styles.addBtnDisabled]} disabled={!comodidade.trim() || loadingComodidade} onPress={handleAddComodidade}>
-                  {loadingComodidade ? <ActivityIndicator size="small" color={COLORS.WHITE} /> : <Text style={styles.addBtnText}>+</Text>}
                 </TouchableOpacity>
               </View>
             </View>

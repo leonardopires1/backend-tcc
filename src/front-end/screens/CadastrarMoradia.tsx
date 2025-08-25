@@ -19,15 +19,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../constants';
 import { useAuth } from '../contexts/AuthContext';
 import { useMoradias } from '../hooks/useMoradias';
+import { useRegras } from '../hooks/useRegras';
+import SelectRegrasModal from '../components/SelectRegrasModal';
 
 export default function CadastrarMoradia({ navigation }: { navigation: any }) {
   const [nomeRepublica, setNomeRepublica] = useState('');
   const [cep, setCep] = useState('');
   const [mensalidade, setMensalidade] = useState('');
+  const [selectedRegrasIds, setSelectedRegrasIds] = useState<number[]>([]);
+  const [regrasModalVisible, setRegrasModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ nome?: string; cep?: string; mensalidade?: string }>({});
-  const { user } = useAuth();
+  const { user, refreshUserData } = useAuth();
   const { createMoradia } = useMoradias();
+  const { regras, loading: loadingRegras } = useRegras();
 
   // Função para formatar CEP automaticamente
   const formatCEP = (text: string) => {
@@ -64,6 +69,15 @@ export default function CadastrarMoradia({ navigation }: { navigation: any }) {
     const cleanedValue = formattedValue.replace(/\D/g, '');
     if (cleanedValue === '') return 0;
     return parseInt(cleanedValue) / 100;
+  };
+
+  // Função para selecionar/desselecionar regras
+  const handleToggleRegra = (regraId: number) => {
+    setSelectedRegrasIds(prev => 
+      prev.includes(regraId) 
+        ? prev.filter(id => id !== regraId)
+        : [...prev, regraId]
+    );
   };
 
   const handleCriarMoradia = async () => {
@@ -107,12 +121,18 @@ export default function CadastrarMoradia({ navigation }: { navigation: any }) {
         endereco: `CEP: ${cleanCEP}`,
         valorMensalidade: getMensalidadeValue(mensalidade),
         donoId: userId,
-      });
+        regras: { id: selectedRegrasIds },
+      } as any);
       if (res.success) {
         alert('Moradia cadastrada com sucesso!');
+        
+        // Atualizar o contexto de autenticação para refletir que o usuário agora faz parte de uma moradia
+        await refreshUserData();
+        
         setNomeRepublica('');
         setCep('');
         setMensalidade('');
+        setSelectedRegrasIds([]);
         navigation.navigate('Home');
       } else {
         const errorData = await res.message;
@@ -189,6 +209,45 @@ export default function CadastrarMoradia({ navigation }: { navigation: any }) {
               />
               {errors.mensalidade && <Text style={styles.errorText}>{errors.mensalidade}</Text>}
             </View>
+
+            {/* Seção de Regras */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Regras da Moradia (Opcional)</Text>
+              <TouchableOpacity
+                style={styles.selectButton}
+                onPress={() => setRegrasModalVisible(true)}
+                disabled={isLoading}
+              >
+                <Text style={styles.selectButtonText}>
+                  {selectedRegrasIds.length === 0 
+                    ? 'Selecionar regras predefinidas' 
+                    : `${selectedRegrasIds.length} regra(s) selecionada(s)`
+                  }
+                </Text>
+                <Text style={styles.selectButtonIcon}>›</Text>
+              </TouchableOpacity>
+              
+              {/* Lista de regras selecionadas */}
+              {selectedRegrasIds.length > 0 && (
+                <View style={styles.selectedRegrasContainer}>
+                  {selectedRegrasIds.map(id => {
+                    const regra = regras.find(r => r.id === id);
+                    return regra ? (
+                      <View key={id} style={styles.selectedRegraItem}>
+                        <Text style={styles.selectedRegraText}>{regra.titulo}</Text>
+                        <TouchableOpacity
+                          onPress={() => handleToggleRegra(id)}
+                          style={styles.removeRegraButton}
+                        >
+                          <Text style={styles.removeRegraText}>×</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ) : null;
+                  })}
+                </View>
+              )}
+            </View>
+
             <TouchableOpacity
               style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
               onPress={handleCriarMoradia}
@@ -202,6 +261,16 @@ export default function CadastrarMoradia({ navigation }: { navigation: any }) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      
+      {/* Modal de Seleção de Regras */}
+      <SelectRegrasModal
+        visible={regrasModalVisible}
+        onClose={() => setRegrasModalVisible(false)}
+        regras={regras}
+        loading={loadingRegras}
+        selectedIds={selectedRegrasIds}
+        onSelect={handleToggleRegra}
+      />
     </SafeAreaView>
   );
 }
@@ -296,5 +365,55 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.LG,
     fontWeight: 'bold',
     color: COLORS.WHITE,
+  },
+  selectButton: {
+    backgroundColor: COLORS.GRAY_LIGHT,
+    borderRadius: BORDER_RADIUS.LG,
+    padding: SPACING.MD,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER_LIGHT,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  selectButtonText: {
+    fontSize: FONT_SIZES.MD,
+    color: COLORS.TEXT_PRIMARY,
+  },
+  selectButtonIcon: {
+    fontSize: FONT_SIZES.LG,
+    color: COLORS.TEXT_SECONDARY,
+    fontWeight: 'bold',
+  },
+  selectedRegrasContainer: {
+    marginTop: SPACING.SM,
+  },
+  selectedRegraItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: COLORS.PRIMARY_LIGHT,
+    borderRadius: BORDER_RADIUS.MD,
+    padding: SPACING.SM,
+    marginBottom: SPACING.XS,
+  },
+  selectedRegraText: {
+    fontSize: FONT_SIZES.SM,
+    color: COLORS.PRIMARY,
+    flex: 1,
+  },
+  removeRegraButton: {
+    backgroundColor: '#fee2e2',
+    borderRadius: BORDER_RADIUS.SM,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: SPACING.SM,
+  },
+  removeRegraText: {
+    fontSize: 16,
+    color: COLORS.ERROR,
+    fontWeight: 'bold',
   },
 });
