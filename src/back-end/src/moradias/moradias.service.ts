@@ -56,11 +56,24 @@ export class MoradiasService {
       );
     }
 
-    // Verifica se algum morador já está em outra moradia
+    // Verifica se o dono já está em outra moradia (mas não se ele será o dono desta)
+    const donoOcupado = await this.prisma.usuario.findUnique({
+      where: { id: donoId },
+      select: { moradiaId: true },
+    });
+
+    if (donoOcupado?.moradiaId) {
+      throw new HttpException(
+        'O dono já faz parte de outra moradia.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    // Verifica se algum morador já está em outra moradia (exclui o dono da verificação)
     const moradoresOcupados = await this.prisma.usuario.findMany({
       where: {
         id: { in: moradoresIds },
-        moradiaId: { not: null }, // Corrigido para usar moradiaId
+        moradiaId: { not: null },
       },
       select: { id: true },
     });
@@ -73,101 +86,108 @@ export class MoradiasService {
       );
     }
 
-    // Cria a moradia (sem moradores ainda)
-    const novaMoradia = await this.prisma.moradia.create({
-      data: {
-        nome,
-        endereco,
-        valorMensalidade,
-        dono: { connect: { id: donoId } },
-        tarefas: {
-          create: tarefas.map((tarefa) => ({
-            nome: tarefa.nome,
-            descricao: tarefa.descricao,
-            recorrencia: tarefa.recorrencia,
-          })),
+    // Usar transação para garantir que tudo seja feito atomicamente
+    const resultado = await this.prisma.$transaction(async (prisma) => {
+      // Cria a moradia
+      const novaMoradia = await prisma.moradia.create({
+        data: {
+          nome,
+          endereco,
+          valorMensalidade,
+          dono: { connect: { id: donoId } },
+          tarefas: {
+            create: tarefas.map((tarefa) => ({
+              nome: tarefa.nome,
+              descricao: tarefa.descricao,
+              recorrencia: tarefa.recorrencia,
+            })),
+          },
+          despesas: {
+            create: despesas.map((despesa) => ({
+              nome: despesa.nome,
+              valorTotal: despesa.valorTotal,
+              vencimento: new Date(despesa.vencimento),
+              tipo: despesa.tipo,
+            })),
+          },
+          regrasMoradia: {
+            connect: regras.id.map((id) => ({ id })),
+          },
+          comodidades: {
+            create: comodidades.map((comodidade) => ({
+              nome: comodidade.nome,
+              descricao: comodidade.descricao,
+            })),
+          },
+          // Adiciona o dono como morador na criação
+          moradores: {
+            connect: { id: donoId },
+          },
         },
-        despesas: {
-          create: despesas.map((despesa) => ({
-            nome: despesa.nome,
-            valorTotal: despesa.valorTotal,
-            vencimento: new Date(despesa.vencimento),
-            tipo: despesa.tipo,
-          })),
+      });
+
+      console.log(`🏠 Moradia criada: ${novaMoradia.id} - Dono: ${donoId}`);
+
+      // Atualiza o usuário dono para vinculá-lo à nova moradia
+      await prisma.usuario.update({
+        where: { id: donoId },
+        data: {
+          moradiaId: novaMoradia.id,
         },
-        regrasMoradia: {
-          connect: regras.id.map((id) => ({ id })),
-        },
-        comodidades: {
-          create: comodidades.map((comodidade) => ({
-            nome: comodidade.nome,
-            descricao: comodidade.descricao,
-          })),
-        },
-      },
+      });
+
+      console.log(`👤 Usuário ${donoId} vinculado à moradia ${novaMoradia.id}`);
+
+      // Atualiza os demais usuários para vinculá-los à nova moradia (se houver)
+      if (moradoresIds.length > 0) {
+        await Promise.all(
+          moradoresIds.map((id) =>
+            prisma.usuario.update({
+              where: { id },
+              data: {
+                moradiaId: novaMoradia.id,
+              },
+            }),
+          ),
+        );
+
+        // Conecta os demais moradores ao relacionamento
+        await prisma.moradia.update({
+          where: { id: novaMoradia.id },
+          data: {
+            moradores: {
+              connect: moradoresIds.map((id) => ({ id })),
+            },
+          },
+        });
+
+        console.log(`👥 ${moradoresIds.length} moradores adicionais vinculados à moradia ${novaMoradia.id}`);
+      }
+
+      return novaMoradia;
     });
 
+    // Registra regras fora da transação (se necessário)
     if (regras.id.length > 0) {
       await this.regrasMoradiaService.registerRegraMoradia(
-        novaMoradia.id,
+        resultado.id,
         regras.id,
       );
     }
 
-    if (comodidades.length > 0) {
+    // Adiciona comodidades fora da transação (se necessário)
+    if (comodidades.length > 0 && comodidades[0].nome) {
       await Promise.all(
         comodidades.map((comodidade) =>
           this.comodidadesMoradiaService.addComodidadeToMoradia(
-            novaMoradia.id,
+            resultado.id,
             { nome: comodidade.nome, descricao: comodidade.descricao || '' }
           )
         )
       );
     }
 
-    // Atualiza o usuário dono para vinculá-lo à nova moradia
-    await this.prisma.usuario.update({
-      where: { id: donoId },
-      data: {
-        moradiaId: novaMoradia.id,
-      },
-    });
-
-    // Conecta o dono ao relacionamento de moradores
-    await this.prisma.moradia.update({
-      where: { id: novaMoradia.id },
-      data: {
-        moradores: {
-          connect: { id: donoId },
-        },
-      },
-    });
-
-    // Atualiza os demais usuários para vinculá-los à nova moradia (se houver)
-    await Promise.all(
-      moradoresIds.map((id) =>
-        this.prisma.usuario.update({
-          where: { id },
-          data: {
-            moradiaId: novaMoradia.id,
-          },
-        }),
-      ),
-    );
-
-    // Conecta os demais moradores ao relacionamento (se houver)
-    if (moradoresIds.length > 0) {
-      await this.prisma.moradia.update({
-        where: { id: novaMoradia.id },
-        data: {
-          moradores: {
-            connect: moradoresIds.map((id) => ({ id })),
-          },
-        },
-      });
-    }
-
-    return novaMoradia;
+    return resultado;
   }
 
   async findAll() {
@@ -278,6 +298,96 @@ export class MoradiasService {
         'Moradia não encontrada ou erro ao atualizar',
       );
     }
+  }
+
+  async adicionarMembro(moradiaId: number, usuarioId: number) {
+    // Verificar se a moradia existe
+    const moradia = await this.prisma.moradia.findUnique({
+      where: { id: moradiaId },
+      include: { 
+        moradores: true,
+        _count: {
+          select: {
+            moradores: true,
+          },
+        },
+      },
+    });
+
+    if (!moradia) {
+      throw new HttpException('Moradia não encontrada', HttpStatus.NOT_FOUND);
+    }
+
+    // Verificar se já não atingiu o limite de 4 moradores
+    if (moradia.moradores.length >= 4) {
+      throw new HttpException('Moradia já possui o número máximo de moradores (4)', HttpStatus.BAD_REQUEST);
+    }
+
+    // Verificar se o usuário existe
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: usuarioId },
+    });
+
+    if (!usuario) {
+      throw new HttpException('Usuário não encontrado', HttpStatus.NOT_FOUND);
+    }
+
+    // Verificar se o usuário já está em uma moradia
+    if (usuario.moradiaId) {
+      throw new HttpException('Usuário já faz parte de uma moradia', HttpStatus.BAD_REQUEST);
+    }
+
+    // Verificar se o usuário já é morador desta moradia
+    const jaEhMorador = moradia.moradores.some(morador => morador.id === usuarioId);
+    if (jaEhMorador) {
+      throw new HttpException('Usuário já é morador desta moradia', HttpStatus.BAD_REQUEST);
+    }
+
+    // Usar transação para garantir consistência
+    const resultado = await this.prisma.$transaction(async (prisma) => {
+      // Atualizar o usuário para vincular à moradia
+      await prisma.usuario.update({
+        where: { id: usuarioId },
+        data: { moradiaId: moradiaId },
+      });
+
+      // Adicionar o usuário ao relacionamento de moradores
+      await prisma.moradia.update({
+        where: { id: moradiaId },
+        data: {
+          moradores: {
+            connect: { id: usuarioId },
+          },
+        },
+      });
+
+      // Retornar a moradia atualizada com os novos dados
+      return await prisma.moradia.findUnique({
+        where: { id: moradiaId },
+        select: {
+          id: true,
+          nome: true,
+          endereco: true,
+          valorMensalidade: true,
+          moradores: {
+            select: {
+              id: true,
+              nome: true,
+              email: true,
+              telefone: true,
+              genero: true,
+            },
+          },
+          _count: {
+            select: {
+              moradores: true,
+            },
+          },
+        },
+      });
+    });
+
+    return resultado;
   }
 
   async remove(id: number) {

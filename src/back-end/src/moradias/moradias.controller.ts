@@ -63,6 +63,15 @@ export class MoradiasController {
     }
   }
 
+  @Patch(':id/adicionar-membro/:usuarioId')
+  async adicionarMembro(@Param('id') moradiaId: string, @Param('usuarioId') usuarioId: string) {
+    try {
+      return await this.moradiasService.adicionarMembro(+moradiaId, +usuarioId);
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
   @Delete(':id')
   async remove(@Param('id') id: string) {
     try {

@@ -79,6 +79,15 @@ export class UsersController {
     return await this.usersService.findOne(user.email);
   }
 
+  @Get('cpf/:cpf')
+  @ApiOperation({ summary: 'Buscar usuário por CPF' })
+  @ApiParam({ name: 'cpf', description: 'CPF do usuário (apenas números)' })
+  @ApiResponse({ status: 200, description: 'Usuário encontrado' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
+  async findByCpf(@Param('cpf') cpf: string) {
+    return await this.usersService.findByCpf(cpf);
+  }
+
   @Get(':email')
   @ApiOperation({ summary: 'Buscar usuário por email' })
   @ApiParam({ name: 'email', description: 'Email do usuário' })

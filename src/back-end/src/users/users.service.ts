@@ -133,6 +133,43 @@ export class UsersService {
     });
   }
 
+  async findByCpf(cpf: string) {
+    const cleanCpf = cpf.replace(/\D/g, ''); // Remove caracteres não numéricos
+    
+    if (cleanCpf.length !== 11) {
+      throw new HttpException(
+        'CPF deve ter 11 dígitos',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const user = await this.prisma.usuario.findUnique({
+      where: { cpf: cleanCpf },
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+        cpf: true,
+        telefone: true,
+        genero: true,
+        moradiaId: true,
+        moradia: {
+          select: {
+            id: true,
+            nome: true,
+            endereco: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    return user;
+  }
+
   async findOne(email: string) {
     const user = await this.prisma.usuario.findUnique({
       where: { email },
@@ -140,6 +177,10 @@ export class UsersService {
         id: true,
         nome: true,
         email: true,
+        cpf: true,
+        telefone: true,
+        genero: true,
+        moradiaId: true,
         senha: true,
         moradiasDono: {
           select: {
@@ -166,6 +207,7 @@ export class UsersService {
           telefone: true,
           genero: true,
           criadoEm: true,
+          moradiaId: true,
           moradiasDono: {
             select: {
               id: true,

@@ -58,16 +58,16 @@ import {
       };
     }
 
-    async getProfile(userId: number) {
-      const user = await this.userService.findOneById(userId);
-      if (!user) {
-        throw new NotFoundException('Usuário não encontrado');
-      }
-      
-      return user;
+  async getProfile(userId: number) {
+    console.log(`📋 Buscando perfil do usuário ${userId}`);
+    const user = await this.userService.findOneById(userId);
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado');
     }
-
-    async forgotPassword(email: string): Promise<{ message: string }> {
+    
+    console.log(`👤 Perfil encontrado: ${user.email}, moradiaId: ${user.moradiaId}`);
+    return user;
+  }    async forgotPassword(email: string): Promise<{ message: string }> {
       console.log('🔑 Iniciando recuperação de senha para:', email);
       
       // Normalizar email
