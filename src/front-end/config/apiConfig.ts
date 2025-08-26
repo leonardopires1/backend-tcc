@@ -1,5 +1,5 @@
 const API_CONFIG = {
-  BASE_URL: "https://eq3.ini3b.projetoscti.com.br",
+  BASE_URL: "http://eq3.ini3b.projetoscti.com.br/api",
 
   ENDPOINTS: {
     AUTH: {
