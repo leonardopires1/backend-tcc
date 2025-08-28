@@ -1,5 +1,5 @@
 const API_CONFIG = {
-  BASE_URL: "http://192.168.217.159:3000",
+  BASE_URL: process.env.BASE_URL,
 
   ENDPOINTS: {
     AUTH: {
