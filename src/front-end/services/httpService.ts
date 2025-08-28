@@ -8,6 +8,7 @@ interface RequestOptions {
   headers?: Record<string, string>;
   requiresAuth?: boolean;
   showErrorToUser?: boolean;
+  isRefreshRequest?: boolean; // Flag para evitar loop infinito
 }
 
 interface ApiResponse<T = any> {
@@ -17,9 +18,16 @@ interface ApiResponse<T = any> {
   ok: boolean;
 }
 
+interface TokenData {
+  token: string | null;
+  refreshToken: string | null;
+  tokenExpiry: number | null;
+}
+
 class HttpService {
   private baseURL: string;
   private timeout: number;
+  private refreshPromise: Promise<boolean> | null = null;
 
   constructor() {
     this.baseURL = API_CONFIG.BASE_URL;
@@ -39,11 +47,93 @@ class HttpService {
     return 'Erro desconhecido';
   }
 
+  private async getTokenData(): Promise<TokenData> {
+    const [token, refreshToken, tokenExpiry] = await Promise.all([
+      AsyncStorage.getItem('userToken'),
+      AsyncStorage.getItem('refreshToken'),
+      AsyncStorage.getItem('tokenExpiry')
+    ]);
+
+    return {
+      token,
+      refreshToken,
+      tokenExpiry: tokenExpiry ? parseInt(tokenExpiry) : null
+    };
+  }
+
   private async getAuthToken(): Promise<string | null> {
-    const token = await safeExecute(async () => {
-      return await AsyncStorage.getItem('userToken');
-    }, null, false);
-    return token || null;
+    const { token } = await this.getTokenData();
+    return token;
+  }
+
+  private async isTokenExpired(): Promise<boolean> {
+    const { tokenExpiry } = await this.getTokenData();
+    if (!tokenExpiry) return false;
+    
+    // Consider token expired 5 minutes before actual expiry
+    return Date.now() >= (tokenExpiry - 5 * 60 * 1000);
+  }
+
+  private async refreshAccessToken(): Promise<boolean> {
+    // Se já há uma promise de refresh em andamento, aguardar ela
+    if (this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    this.refreshPromise = this.performTokenRefresh();
+    
+    try {
+      const result = await this.refreshPromise;
+      return result;
+    } finally {
+      this.refreshPromise = null;
+    }
+  }
+
+  private async performTokenRefresh(): Promise<boolean> {
+    try {
+      const { refreshToken } = await this.getTokenData();
+      
+      if (!refreshToken) {
+        console.log('❌ Nenhum refresh token disponível');
+        return false;
+      }
+
+      const response = await this.makeRequest<{ access_token: string; expires_in: number }>(
+        API_CONFIG.ENDPOINTS.AUTH.REFRESH,
+        {
+          method: 'POST',
+          body: { refresh_token: refreshToken },
+          requiresAuth: false,
+          isRefreshRequest: true
+        }
+      );
+
+      if (response.ok && response.data) {
+        const { access_token, expires_in } = response.data;
+        const tokenExpiry = Date.now() + (expires_in * 1000);
+        
+        await Promise.all([
+          AsyncStorage.setItem('userToken', access_token),
+          AsyncStorage.setItem('tokenExpiry', tokenExpiry.toString())
+        ]);
+        
+        console.log('✅ Token renovado com sucesso');
+        return true;
+      } else {
+        console.log('❌ Falha ao renovar token');
+        await this.clearAuthTokens();
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Erro ao renovar token:', error);
+      await this.clearAuthTokens();
+      return false;
+    }
+  }
+
+  private async clearAuthTokens(): Promise<void> {
+    await AsyncStorage.multiRemove(['userToken', 'userData', 'refreshToken', 'tokenExpiry']);
   }
 
   // Verifica se o servidor está acessível
@@ -73,7 +163,8 @@ class HttpService {
       body,
       headers = {},
       requiresAuth = true,
-      showErrorToUser = false
+      showErrorToUser = false,
+      isRefreshRequest = false
     } = options;
 
     const fallbackResponse: ApiResponse<T> = {
@@ -83,6 +174,22 @@ class HttpService {
     };
 
     const result = await safeExecute(async () => {
+      // Se requer autenticação e não é um refresh request, verificar se token precisa ser renovado
+      if (requiresAuth && !isRefreshRequest) {
+        const expired = await this.isTokenExpired();
+        if (expired) {
+          console.log('🔄 Token expirado, tentando renovar...');
+          const refreshed = await this.refreshAccessToken();
+          if (!refreshed) {
+            return {
+              status: 401,
+              ok: false,
+              error: 'Sessão expirada. Por favor, faça login novamente.',
+            };
+          }
+        }
+      }
+
       const url = `${this.baseURL}${endpoint}`;
       
       const requestHeaders: Record<string, string> = {
@@ -130,6 +237,24 @@ class HttpService {
           ok: response.ok,
           error: !response.ok ? this.extractErrorMessage(data) : undefined,
         };
+
+        // Se recebeu 401 (não autorizado) e não é um refresh request, tentar renovar token
+        if (response.status === 401 && requiresAuth && !isRefreshRequest) {
+          console.log('🔄 Token inválido (401), tentando renovar...');
+          const refreshed = await this.refreshAccessToken();
+          
+          if (refreshed) {
+            // Tentar a requisição novamente com o novo token
+            console.log('🔄 Reenviando requisição com novo token...');
+            return this.makeRequest<T>(endpoint, { ...options, isRefreshRequest: true });
+          } else {
+            return {
+              status: 401,
+              ok: false,
+              error: 'Sessão expirada. Por favor, faça login novamente.',
+            };
+          }
+        }
 
         // Se houve erro e deve mostrar ao usuário
         if (!response.ok && showErrorToUser) {

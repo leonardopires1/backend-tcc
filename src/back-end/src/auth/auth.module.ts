@@ -1,25 +1,35 @@
 import { forwardRef, Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UsersModule } from 'src/users/users.module';
-import { JwtModule } from '@nestjs/jwt';
 import { AuthGuard } from './auth.guard';
 import { DatabaseModule } from 'src/database/database.module';
 import { EmailModule } from 'src/email/email.module';
 
 @Module({
   imports: [
+    ConfigModule,
     DatabaseModule,
     EmailModule,
     forwardRef(() => UsersModule),
-    JwtModule.register({
+    JwtModule.registerAsync({
       global: true,
-      secret: process.env.SECRET_KEY || 'defaultSecretKey',
-      signOptions: { expiresIn: '86400s' },
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('jwt.secret'),
+        signOptions: { 
+          expiresIn: configService.get<string>('jwt.expiresIn') || '24h',
+          issuer: 'roommate-api',
+          audience: 'roommate-app',
+        },
+      }),
+      inject: [ConfigService],
     }),
   ],
   controllers: [AuthController],
   providers: [AuthService, AuthGuard],
-  exports: [AuthService, AuthGuard],
+  exports: [AuthService, AuthGuard, JwtModule],
 })
 export class AuthModule {}

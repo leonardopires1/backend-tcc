@@ -67,8 +67,8 @@ export default function Home({ navigation }: { navigation: any }) {
     ...(isMembro ? [{
       icon: 'people' as keyof typeof Ionicons.glyphMap,
       title: 'Minha Moradia',
-      description: 'Acesse o painel da sua república',
-      onPress: () => navigation.navigate("RepublicaDashboard"),
+      description: 'Acesse o painel da sua moradia',
+      onPress: () => navigation.navigate("MoradiaDashboard"),
       color: '#673AB7',
     }] : []),
     {

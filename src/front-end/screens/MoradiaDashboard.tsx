@@ -15,8 +15,12 @@ import { useTarefas } from '../hooks/useTarefas';
 import { Loading } from '../components/common/Loading';
 import { ErrorMessage } from '../components/common/ErrorMessage';
 import AddMembroModal from '../components/AddMembroModal';
+import { useMoradias } from '../hooks/useMoradias';
+import HttpService from '../services/httpService';
+import API_CONFIG from '../config/apiConfig';
+import Moradia from '../types/Moradia';
 
-interface Membro {
+interface Morador {
   id: number;
   nome: string;
   email: string;
@@ -24,12 +28,8 @@ interface Membro {
   genero: string;
 }
 
-interface moradia {
-  id: number;
-  nome: string;
-  endereco: string;
-  valorMensalidade: number;
-  membros: Membro[];
+interface MoradiaDetalhada extends Moradia {
+  moradores: Morador[];
   dono: {
     id: number;
     nome: string;
@@ -47,11 +47,11 @@ interface Conta {
   responsavel: string;
 }
 
-export default function moradiaDashboard({ navigation }: { navigation: any }) {
-  const { user } = useAuth();
+export default function MoradiaDashboard({ navigation }: { navigation: any }) {
+  const { user, refreshUserData } = useAuth();
   const { tarefas, loading: tarefasLoading, error: tarefasError, refreshTarefas } = useTarefas();
-  
-  const [moradia, setmoradia] = useState<moradia | null>(null);
+
+  const [moradiaData, setMoradiaData] = useState<MoradiaDetalhada | null>(null);
   const [contas, setContas] = useState<Conta[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -59,90 +59,132 @@ export default function moradiaDashboard({ navigation }: { navigation: any }) {
   const [showAddMembroModal, setShowAddMembroModal] = useState(false);
 
   useEffect(() => {
-    loadmoradiaData();
-  }, []);
+    console.log('🏠 MoradiaDashboard montado, usuário:', { 
+      id: user?.id, 
+      nome: user?.nome, 
+      moradiaId: user?.moradiaId 
+    });
+    loadMoradiaData();
+  }, [user]);
 
-  const loadmoradiaData = async () => {
+  const loadMoradiaData = async () => {
     try {
       setLoading(true);
-      // Simulando dados da república - em produção isso viria de uma API
-      const moradiaData: moradia = {
-        id: 1,
-        nome: "República Casa Verde",
-        endereco: "Rua das Flores, 123 - Centro",
-        valorMensalidade: 800,
-        membros: [
-          {
-            id: 1,
-            nome: "João Silva",
-            email: "joao@email.com",
-            telefone: "(11) 99999-1111",
-            genero: "Masculino"
-          },
-          {
-            id: 2,
-            nome: "Maria Santos",
-            email: "maria@email.com",
-            telefone: "(11) 99999-2222",
-            genero: "Feminino"
-          },
-          {
-            id: 3,
-            nome: "Pedro Costa",
-            email: "pedro@email.com",
-            telefone: "(11) 99999-3333",
-            genero: "Masculino"
+      setError(null);
+
+      if (!user?.moradiaId) {
+        console.log('👤 Usuário não tem moradiaId, tentando buscar moradia do usuário...');
+        await refreshUserData();
+        
+        // Tentar buscar moradia do usuário através de endpoint específico
+        try {
+          const userMoradiaResponse = await HttpService.get<MoradiaDetalhada[]>(
+            API_CONFIG.ENDPOINTS.MORADIAS.BY_USER
+          );
+          
+          if (userMoradiaResponse.ok && userMoradiaResponse.data && userMoradiaResponse.data.length > 0) {
+            setMoradiaData(userMoradiaResponse.data[0]);
+            console.log('✅ Moradia encontrada através do usuário:', userMoradiaResponse.data[0].nome);
+            return;
           }
-        ],
-        dono: {
-          id: 1,
-          nome: "Ana Proprietária",
-          email: "ana@email.com"
+        } catch (err) {
+          console.log('⚠️ Erro ao buscar moradia do usuário, usuário pode não ter moradia');
         }
-      };
+        
+        setMoradiaData(null);
+        setError(null); // Não é erro, usuário só não tem moradia
+        return;
+      }
 
-      const contasData: Conta[] = [
-        {
-          id: 1,
-          descricao: "Conta de Luz",
-          valor: 120.50,
-          tipo: "luz",
-          vencimento: "30/04",
-          pago: false,
-          responsavel: "João Silva"
-        },
-        {
-          id: 2,
-          descricao: "Conta de Água",
-          valor: 85.30,
-          tipo: "agua",
-          vencimento: "15/04",
-          pago: true,
-          responsavel: "Maria Santos"
-        },
-        {
-          id: 3,
-          descricao: "Internet",
-          valor: 99.90,
-          tipo: "internet",
-          vencimento: "10/04",
-          pago: false,
-          responsavel: "Pedro Costa"
+      console.log('🏠 Buscando dados da moradia:', user.moradiaId);
+
+      // Buscar dados da moradia com moradores
+      const moradiaResponse = await HttpService.get<MoradiaDetalhada>(
+        API_CONFIG.ENDPOINTS.MORADIAS.BY_ID(user.moradiaId)
+      );
+
+      if (moradiaResponse.ok && moradiaResponse.data) {
+        // Se os moradores não vieram com os dados detalhados, buscar separadamente
+        let moradiaCompleta = moradiaResponse.data;
+        
+        if (!moradiaCompleta.moradores || moradiaCompleta.moradores.length === 0) {
+          console.log('🔍 Moradores não encontrados, adicionando usuário atual...');
+          
+          // Adicionar pelo menos o usuário atual como morador
+          const moradoresComUsuario: Morador[] = [
+            {
+              id: user.id,
+              nome: user.nome,
+              email: user.email,
+              telefone: user.telefone,
+              genero: user.genero
+            }
+          ];
+          
+          moradiaCompleta.moradores = moradoresComUsuario;
         }
-      ];
+        
+        setMoradiaData(moradiaCompleta);
+        console.log('✅ Dados da moradia carregados:', moradiaCompleta.nome);
+      } else {
+        throw new Error(moradiaResponse.error || 'Erro ao carregar dados da moradia');
+      }
 
-      setmoradia(moradiaData);
-      setContas(contasData);
-    } catch (err) {
-      setError('Erro ao carregar dados da república');
+      // Buscar contas pendentes (simulado por enquanto)
+      await loadContasPendentes();
+
+    } catch (err: any) {
+      console.error('❌ Erro ao carregar dados da moradia:', err);
+      setError(err.message || 'Erro ao carregar dados da moradia');
     } finally {
       setLoading(false);
     }
   };
 
+  const loadContasPendentes = async () => {
+    try {
+      // Por enquanto, dados simulados - substituir por API real quando disponível
+      const contasSimuladas: Conta[] = [
+        {
+          id: 1,
+          descricao: 'Conta de Luz',
+          valor: 150.50,
+          tipo: 'luz',
+          vencimento: '15/12/2024',
+          pago: false,
+          responsavel: 'João Silva'
+        },
+        {
+          id: 2,
+          descricao: 'Internet',
+          valor: 89.90,
+          tipo: 'internet',
+          vencimento: '20/12/2024',
+          pago: false,
+          responsavel: 'Maria Santos'
+        },
+        {
+          id: 3,
+          descricao: 'Água',
+          valor: 78.30,
+          tipo: 'agua',
+          vencimento: '10/12/2024',
+          pago: true,
+          responsavel: 'Pedro Costa'
+        }
+      ];
+      
+      setContas(contasSimuladas);
+      console.log('✅ Contas carregadas:', contasSimuladas.length);
+    } catch (err) {
+      console.warn('⚠️ Erro ao carregar contas, usando dados padrão');
+      setContas([]);
+    }
+  };
+
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([loadmoradiaData(), refreshTarefas()]);
+    await Promise.all([loadMoradiaData(), refreshTarefas()]);
     setRefreshing(false);
   };
 
@@ -191,9 +233,39 @@ export default function moradiaDashboard({ navigation }: { navigation: any }) {
     );
   };
 
-  const handleMembroAdicionado = () => {
-    // Recarrega os dados da república para mostrar o novo membro
-    loadmoradiaData();
+  const handleMembroAdicionado = async () => {
+    // Recarrega os dados da moradia para mostrar o novo membro
+    console.log('🔄 Recarregando dados após adicionar membro...');
+    await loadMoradiaData();
+  };
+
+  const handleAdicionarMembro = async (usuarioId: number) => {
+    try {
+      if (!moradiaData?.id) return;
+      
+      console.log('➕ Adicionando membro à moradia:', { moradiaId: moradiaData.id, usuarioId });
+      
+      const response = await HttpService.post(
+        API_CONFIG.ENDPOINTS.MORADIAS.ADD_MEMBER(moradiaData.id, usuarioId),
+        {},
+        true
+      );
+
+      if (response.ok) {
+        console.log('✅ Membro adicionado com sucesso');
+        Alert.alert('Sucesso', 'Membro adicionado à moradia com sucesso!');
+        await loadMoradiaData(); // Recarregar dados
+        return true;
+      } else {
+        console.log('❌ Erro ao adicionar membro:', response.error);
+        Alert.alert('Erro', response.error || 'Erro ao adicionar membro');
+        return false;
+      }
+    } catch (error: any) {
+      console.error('❌ Erro ao adicionar membro:', error);
+      Alert.alert('Erro', 'Erro de conexão. Tente novamente.');
+      return false;
+    }
   };
 
   if (loading || tarefasLoading) {
@@ -201,15 +273,33 @@ export default function moradiaDashboard({ navigation }: { navigation: any }) {
   }
 
   if (error || tarefasError) {
-    return <ErrorMessage message={error || tarefasError || 'Erro desconhecido'} onRetry={loadmoradiaData} />;
+    return <ErrorMessage message={error || tarefasError || 'Erro desconhecido'} onRetry={loadMoradiaData} />;
   }
 
-  if (!moradia) {
+  if (!moradiaData) {
     return (
       <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color="#333" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Moradia</Text>
+          <TouchableOpacity>
+            <Ionicons name="settings-outline" size={24} color="#333" />
+          </TouchableOpacity>
+        </View>
         <View style={styles.errorContainer}>
           <Ionicons name="home-outline" size={64} color="#CCC" />
-          <Text style={styles.errorText}>Você não faz parte de nenhuma república</Text>
+          <Text style={styles.errorText}>Você não faz parte de nenhuma moradia</Text>
+          <Text style={styles.errorSubtext}>
+            Entre em uma moradia existente ou crie uma nova para começar
+          </Text>
+          <TouchableOpacity 
+            style={styles.createButton}
+            onPress={() => navigation.navigate('CadastrarMoradia')}
+          >
+            <Text style={styles.createButtonText}>Criar Nova Moradia</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -229,8 +319,8 @@ export default function moradiaDashboard({ navigation }: { navigation: any }) {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>República</Text>
-        <TouchableOpacity>
+        <Text style={styles.headerTitle}>Moradia</Text>
+        <TouchableOpacity onPress={() => console.log('⚙️ Configurações clicadas')}>
           <Ionicons name="settings-outline" size={24} color="#333" />
         </TouchableOpacity>
       </View>
@@ -249,10 +339,10 @@ export default function moradiaDashboard({ navigation }: { navigation: any }) {
               <Ionicons name="home" size={32} color="#0073FF" />
             </View>
             <View style={styles.moradiaInfo}>
-              <Text style={styles.moradiaNome}>{moradia.nome}</Text>
-              <Text style={styles.moradiaEndereco}>{moradia.endereco}</Text>
+              <Text style={styles.moradiaNome}>{moradiaData.nome}</Text>
+              <Text style={styles.moradiaEndereco}>{moradiaData.endereco}</Text>
               <Text style={styles.moradiaValor}>
-                Mensalidade: {formatCurrency(moradia.valorMensalidade)}
+                Mensalidade: {formatCurrency(moradiaData.valorMensalidade)}
               </Text>
             </View>
           </View>
@@ -272,7 +362,10 @@ export default function moradiaDashboard({ navigation }: { navigation: any }) {
             <View style={styles.resumoItem}>
               <Text style={styles.resumoLabel}>Por Pessoa</Text>
               <Text style={styles.resumoValor}>
-                {formatCurrency(totalContasPendentes / moradia.membros.length)}
+                {moradiaData.moradores ? 
+                  formatCurrency(totalContasPendentes / moradiaData.moradores.length) :
+                  formatCurrency(0)
+                }
               </Text>
             </View>
           </View>
@@ -350,10 +443,10 @@ export default function moradiaDashboard({ navigation }: { navigation: any }) {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Membros</Text>
-            <Text style={styles.membroCount}>{moradia.membros.length}/4</Text>
+            <Text style={styles.membroCount}>{moradiaData.moradores?.length || 0}/4</Text>
           </View>
           <View style={styles.membrosGrid}>
-            {moradia.membros.map((membro) => (
+            {moradiaData.moradores?.map((membro: Morador) => (
               <View key={membro.id} style={styles.membroCard}>
                 <View style={styles.membroAvatar}>
                   <Text style={styles.membroInicial}>
@@ -369,7 +462,7 @@ export default function moradiaDashboard({ navigation }: { navigation: any }) {
               </View>
             ))}
             {/* Vaga disponível */}
-            {moradia.membros.length < 4 && (
+            {(moradiaData.moradores?.length || 0) < 4 && (
               <TouchableOpacity 
                 style={[styles.membroCard, styles.vagaDisponivel]}
                 onPress={() => setShowAddMembroModal(true)}
@@ -402,7 +495,7 @@ export default function moradiaDashboard({ navigation }: { navigation: any }) {
         visible={showAddMembroModal}
         onClose={() => setShowAddMembroModal(false)}
         onMembroAdicionado={handleMembroAdicionado}
-        moradiaId={moradia?.id || 1}
+        moradiaId={moradiaData?.id || 1}
       />
     </SafeAreaView>
   );
@@ -446,6 +539,24 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     marginTop: 16,
+  },
+  errorSubtext: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  createButton: {
+    backgroundColor: '#0073FF',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+  createButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   moradiaCard: {
     backgroundColor: '#FFF',
