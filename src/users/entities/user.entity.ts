@@ -1,4 +1,4 @@
-import { Moradia } from "@prisma/client";
+import { Usuario, Moradia } from "@prisma/client";
 
 
 export class User {

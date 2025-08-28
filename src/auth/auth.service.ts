@@ -5,6 +5,7 @@ import {
     NotFoundException,
     UnauthorizedException,
   } from '@nestjs/common';
+  import { ConfigService } from '@nestjs/config';
   import { UsersService } from 'src/users/users.service';
   import * as bcrypt from 'bcrypt';
   import { JwtService } from '@nestjs/jwt';
@@ -25,10 +26,13 @@ import {
 
     @Inject()
     private readonly emailService: EmailService;
+    
+    @Inject()
+    private readonly configService: ConfigService;
   
   async signin(
     params: { email: string; senha: string },
-  ): Promise<{ access_token: string; user: any }> {
+  ): Promise<{ access_token: string; refresh_token: string; user: any; expires_in: number }> {
     console.log('🔐 AuthService.signin - params:', params);
     // Normalizar email para lowercase como no cadastro
     const normalizedEmail = params.email.toLowerCase().trim();
@@ -37,7 +41,7 @@ import {
     const user = await this.userService.findOne(normalizedEmail);
     if (!user) {
       console.log('❌ Usuário não encontrado para email:', normalizedEmail);
-      throw new NotFoundException('Usuário não encontrado');
+      throw new NotFoundException('Credenciais inválidas');
     }
     
     console.log('✅ Usuário encontrado, verificando senha...');
@@ -47,16 +51,80 @@ import {
       throw new UnauthorizedException('Credenciais inválidas');
     }
     
-    console.log('✅ Senha confere, gerando token...');
-    const payload = { sub: user.id };
-    const accessToken = await this.jwtService.signAsync(payload);      // Remover senha do retorno
-      const { senha, ...userWithoutPassword } = user;
-  
-      return { 
-        access_token: accessToken,
-        user: userWithoutPassword,
+    console.log('✅ Senha confere, gerando tokens...');
+    
+    // Payload mais rico para o JWT
+    const payload = { 
+      sub: user.id,
+      email: user.email,
+      nome: user.nome,
+      moradiaId: user.moradiaId,
+      iat: Math.floor(Date.now() / 1000),
+    };
+    
+    // Gerar access token e refresh token
+    const expiresIn = 24 * 60 * 60; // 24 horas em segundos
+    const accessToken = await this.jwtService.signAsync(payload, {
+      expiresIn: this.configService.get<string>('jwt.expiresIn') || '24h',
+    });
+    
+    const refreshToken = await this.jwtService.signAsync(
+      { sub: user.id, type: 'refresh' },
+      { expiresIn: '7d' } // Refresh token válido por 7 dias
+    );
+    
+    // Remover senha do retorno
+    const { senha, ...userWithoutPassword } = user;
+
+    return { 
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      expires_in: expiresIn,
+      user: userWithoutPassword,
+    };
+  }
+
+  async refreshToken(refreshToken: string): Promise<{ access_token: string; expires_in: number }> {
+    try {
+      const payload = await this.jwtService.verifyAsync(refreshToken, {
+        secret: this.configService.get<string>('jwt.secret'),
+      });
+      
+      if (payload.type !== 'refresh') {
+        throw new UnauthorizedException('Token de refresh inválido');
+      }
+      
+      // Buscar usuário atualizado
+      const user = await this.userService.findOneById(payload.sub);
+      if (!user) {
+        throw new UnauthorizedException('Usuário não encontrado');
+      }
+      
+      // Gerar novo access token
+      const newPayload = { 
+        sub: user.id,
+        email: user.email,
+        nome: user.nome,
+        moradiaId: user.moradiaId,
+        iat: Math.floor(Date.now() / 1000),
       };
+      
+      const expiresIn = 24 * 60 * 60; // 24 horas em segundos
+      const accessToken = await this.jwtService.signAsync(newPayload, {
+        expiresIn: this.configService.get<string>('jwt.expiresIn') || '24h',
+      });
+      
+      console.log('🔄 Token renovado para usuário:', user.id);
+      
+      return {
+        access_token: accessToken,
+        expires_in: expiresIn,
+      };
+    } catch (error) {
+      console.log('❌ Erro ao renovar token:', error.message);
+      throw new UnauthorizedException('Token de refresh inválido ou expirado');
     }
+  }
 
   async getProfile(userId: number) {
     console.log(`📋 Buscando perfil do usuário ${userId}`);

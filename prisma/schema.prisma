@@ -88,7 +88,7 @@ model DespesaUsuario {
 
 model Regras {
   id            Int             @id @default(autoincrement())
-  titulo        String
+  titulo        String          @unique         // evita duplicidade de títulos
   descricao     String?
   regrasMoradia RegrasMoradia[]
 }
@@ -99,6 +99,7 @@ model RegrasMoradia {
   moradiaId Int
   regra     Regras  @relation(fields: [regraId], references: [id])
   regraId   Int
+  @@unique([moradiaId, regraId])               // evita vincular a mesma regra 2x na mesma moradia
 }
 
 model Comodidades {

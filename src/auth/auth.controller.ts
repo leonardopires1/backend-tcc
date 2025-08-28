@@ -50,6 +50,8 @@ class SignInDto {
 
 class LoginResponseDto {
   access_token: string;
+  refresh_token: string;
+  expires_in: number;
   user: {
     id: number;
     nome: string;
@@ -111,6 +113,16 @@ export class AuthController {
           type: 'string',
           example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
           description: 'Token JWT para autenticação',
+        },
+        refresh_token: {
+          type: 'string',
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+          description: 'Token para renovação do access token',
+        },
+        expires_in: {
+          type: 'number',
+          example: 86400,
+          description: 'Tempo de vida do access token em segundos',
         },
         user: {
           type: 'object',
@@ -252,6 +264,80 @@ export class AuthController {
   }
 
   @Public()
+  @UseGuards(ThrottlerGuard)
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: 'Renovar access token', 
+    description: 'Renova o access token usando o refresh token' 
+  })
+  @ApiBody({
+    description: 'Refresh token para renovação',
+    schema: {
+      type: 'object',
+      properties: {
+        refresh_token: { 
+          type: 'string', 
+          description: 'Refresh token válido',
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+        },
+      },
+      required: ['refresh_token'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Token renovado com sucesso',
+    schema: {
+      type: 'object',
+      properties: {
+        access_token: { 
+          type: 'string', 
+          description: 'Novo access token JWT',
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+        },
+        expires_in: { 
+          type: 'number', 
+          description: 'Tempo de expiração em segundos',
+          example: 3600
+        },
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Refresh token inválido ou expirado',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 401 },
+        message: { type: 'string', example: 'Refresh token inválido' },
+        error: { type: 'string', example: 'Unauthorized' },
+      },
+    },
+  })
+  @ApiResponse({ status: 429, description: 'Muitas tentativas. Tente novamente mais tarde.' })
+  async refreshToken(@Body('refresh_token') refreshToken: string) {
+    try {
+      console.log('🔄 Tentativa de renovação de token');
+      
+      if (!refreshToken) {
+        throw new BadRequestException('Refresh token é obrigatório');
+      }
+
+      return await this.authService.refreshToken(refreshToken);
+    } catch (error) {
+      console.log('❌ Erro na renovação de token:', error.message);
+      
+      if (error instanceof BadRequestException || error instanceof UnauthorizedException) {
+        throw error;
+      }
+      
+      throw new InternalServerErrorException('Erro interno no servidor');
+    }
+  }
+
+  @Public()
+  @UseGuards(ThrottlerGuard)
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ 

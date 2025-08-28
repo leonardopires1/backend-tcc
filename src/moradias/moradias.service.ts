@@ -274,7 +274,7 @@ export class MoradiasService {
   async update(id: number, updateMoradiaDto: UpdateMoradiaDto) {
     const { nome, endereco, donoId, valorMensalidade } = updateMoradiaDto;
 
-    const data: Prisma.MoradiaUpdateInput = {
+    const data: any = {
       ...(nome && { nome }),
       ...(endereco && { endereco }),
       ...(valorMensalidade && { valorMensalidade }),
