@@ -1,4 +1,4 @@
-# 🏠 CompartilhaApp
+# 🏠 ROOMMATE
 
 Aplicativo para **buscar** e **gerenciar casas compartilhadas**, ideal para estudantes, jovens profissionais e qualquer pessoa que queira dividir moradia de forma organizada.
 
