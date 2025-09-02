@@ -26,6 +26,7 @@ export class MoradiasService {
       endereco,
       donoId,
       valorMensalidade,
+      imagemUrl,
       moradoresIds = [],
       tarefas = [],
       despesas = [],
@@ -69,6 +70,7 @@ export class MoradiasService {
           nome,
           endereco,
           valorMensalidade,
+          imagemUrl,
           dono: { connect: { id: donoId } },
           tarefas: {
             create: tarefas.map((tarefa) => ({
@@ -167,6 +169,7 @@ export class MoradiasService {
         descricao: true,
         endereco: true,
         valorMensalidade: true,
+        imagemUrl: true, // Incluir imagem da moradia
         dono: { select: { id: true, nome: true, email: true } },
         moradores: { 
           select: { 
@@ -194,6 +197,7 @@ export class MoradiasService {
         descricao: true,
         endereco: true,
         valorMensalidade: true,
+        imagemUrl: true, // Incluir imagem da moradia
         dono: { select: { id: true, nome: true, email: true } },
         moradores: {
           select: { id: true, nome: true, email: true }
@@ -213,6 +217,7 @@ export class MoradiasService {
         endereco: true,
         descricao: true,
         valorMensalidade: true,
+        imagemUrl: true, // Incluir imagem da moradia
         regrasMoradia: true,
         comodidades: true,
         dono: { select: { id: true, nome: true, email: true } },
@@ -258,6 +263,7 @@ export class MoradiasService {
           nome: true,
           endereco: true,
           valorMensalidade: true,
+          imagemUrl: true, // Incluir imagem da moradia
           dono: { select: { id: true, nome: true, email: true } },
         },
       });
@@ -346,6 +352,7 @@ export class MoradiasService {
           nome: true,
           endereco: true,
           valorMensalidade: true,
+          imagemUrl: true, // Incluir imagem da moradia
           moradores: {
             select: {
               id: true,
@@ -367,17 +374,6 @@ export class MoradiasService {
     return resultado;
   }
 
-  // async uploadImage(file: Express.Multer.File, {
-  //   storage: diskStorage
-  // }) {
-  //   // try {
-  //   //   const result = await this.cloudinary.uploader.upload(file.path);
-  //   //   return result;
-  //   // } catch (error) {
-  //   //   throw new HttpException('Erro ao fazer upload da imagem', HttpStatus.BAD_REQUEST);
-  //   // }
-  // }
-
   async remove(id: number) {
     console.log(`🗑️  Iniciando remoção da moradia ID: ${id}`);
     
@@ -392,6 +388,7 @@ export class MoradiasService {
             id: true,
             nome: true,
             endereco: true,
+            imagemUrl: true, // Incluir imagem da moradia
           },
         });
         console.log(`✅ Moradia removida:`, moradiaRemovida);

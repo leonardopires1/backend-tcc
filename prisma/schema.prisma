@@ -34,6 +34,7 @@ model Moradia {
   endereco         String?
   criadoEm         DateTime        @default(now())
   valorMensalidade Float
+  imagemUrl        String?         // Campo para armazenar URL/nome da imagem da moradia
   dono             Usuario        @relation("DonoMoradia", fields: [donoId], references: [id]) // Relacionamento com o dono (um-para-muitos)
   donoId           Int // Referência ao dono (usuário pode ser dono de múltiplas moradias)
   moradores        Usuario[]       @relation("Moradores") // Relacionamento com vários usuários morando na mesma moradia

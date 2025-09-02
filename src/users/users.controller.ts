@@ -24,6 +24,8 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Public, CurrentUser } from '../common/decorators/user.decorator';
+import { diskStorage } from 'multer';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -109,10 +111,22 @@ export class UsersController {
     return await this.usersService.update(id, updateUserDto);
   }
 
-   async uploadAvatar(
-    @Param('id') userId: string,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
+  @Post('/upload-avatar/:id')
+  @ApiOperation({ summary: 'Upload de avatar do usuário' })
+  @ApiResponse({ status: 200, description: 'Avatar do usuário atualizado com sucesso' })
+  @ApiResponse({ status: 400, description: 'Arquivo inválido' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
+  @UseInterceptors(FileInterceptor('file', {
+    storage: diskStorage({
+      destination: './images/avatars',
+      filename: (req, file, cb) => {
+        const userId = req.params.id;
+        const fileName = `${userId}-${Date.now()}.${file.originalname.split('.').pop()}`;
+        cb(null, fileName);
+      }
+    })
+  }))
+  async uploadAvatar(@UploadedFile() file: Express.Multer.File, @Param('id') id: string) {
     if (!file) {
       throw new HttpException('Arquivo não enviado', HttpStatus.BAD_REQUEST);
     }
@@ -120,7 +134,7 @@ export class UsersController {
     const avatarUrl = `/uploads/${file.filename}`;
 
     // Salva no banco de dados
-    await this.usersService.updateAvatar(userId, avatarUrl);
+    await this.usersService.updateAvatar(id, avatarUrl);
 
     return { avatarUrl };
   }
