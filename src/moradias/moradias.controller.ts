@@ -1,7 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpException, HttpStatus, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { MoradiasService } from './moradias.service';
 import { CreateMoradiaDto } from './dto/create-moradia.dto';
 import { UpdateMoradiaDto } from './dto/update-moradia.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { Observable } from 'rxjs';
 
 @Controller('moradias')
 export class MoradiasController {
@@ -64,12 +67,27 @@ export class MoradiasController {
   }
 
   @Patch(':id/adicionar-membro/:usuarioId')
-  async adicionarMembro(@Param('id') moradiaId: string, @Param('usuarioId') usuarioId: string) {
+  async adicionarMembro(@Param('id') moradiaId: string, @Param('usuarioId') usuarioId: string): Promise<any> {
     try {
       return await this.moradiasService.adicionarMembro(+moradiaId, +usuarioId);
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
+  }
+
+  @Post('/image-upload/:id')
+  @UseInterceptors(FileInterceptor('file', {
+    storage: diskStorage({
+      destination: './images/moradias',
+      filename: (req: any, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
+        const moradiaId: string = req.params.id;
+        const fileName: string = `${file.originalname.split('.')[0]}_${moradiaId}.${file.originalname.split('.').pop()}`;
+        cb(null, fileName);
+      }
+    })
+  }))
+  async uploadImage(@UploadedFile() file: Express.Multer.File) {
+    return {imagePath: file.path}
   }
 
   @Delete(':id')
@@ -81,3 +99,7 @@ export class MoradiasController {
     }
   }
 }
+  function uploadImage(arg0: any, file: any, File: any) {
+    throw new Error('Function not implemented.');
+  }
+

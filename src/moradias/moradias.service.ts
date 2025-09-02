@@ -94,24 +94,18 @@ export class MoradiasService {
               descricao: comodidade.descricao,
             })),
           },
-          // Adiciona o dono como morador na criação
-          moradores: {
-            connect: { id: donoId },
-          },
+          // REMOVIDO: Dono não é mais automaticamente adicionado como morador
+          // Ele pode ser adicionado separadamente se necessário
         },
       });
 
       console.log(`🏠 Moradia criada: ${novaMoradia.id} - Dono: ${donoId}`);
 
-      // Atualiza o usuário dono para vinculá-lo à nova moradia
-      await prisma.usuario.update({
-        where: { id: donoId },
-        data: {
-          moradiaId: novaMoradia.id,
-        },
-      });
-
-      console.log(`👤 Usuário ${donoId} vinculado à moradia ${novaMoradia.id}`);
+      // REMOVIDO: Não vincula mais o dono através do moradiaId
+      // Isso permite que o dono seja dono de múltiplas moradias
+      // e também possa ser morador em outras moradias
+      
+      console.log(`👤 Usuário ${donoId} definido como dono da moradia ${novaMoradia.id}`);
 
       // Atualiza os demais usuários para vinculá-los à nova moradia (se houver)
       if (moradoresIds.length > 0) {
@@ -300,15 +294,24 @@ export class MoradiasService {
     // Verificar se o usuário existe
     const usuario = await this.prisma.usuario.findUnique({
       where: { id: usuarioId },
+      include: {
+        moradiasDono: true, // Incluir moradias onde é dono
+      }
     });
 
     if (!usuario) {
       throw new HttpException('Usuário não encontrado', HttpStatus.NOT_FOUND);
     }
 
-    // Verificar se o usuário já está em uma moradia
+    // Verificar se o usuário já é dono desta moradia específica
+    const jaDonoDesta = usuario.moradiasDono.some(m => m.id === moradiaId);
+    if (jaDonoDesta) {
+      throw new HttpException('Usuário é dono desta moradia e não pode ser adicionado como morador', HttpStatus.BAD_REQUEST);
+    }
+
+    // Verificar se o usuário já está em uma moradia COMO MORADOR (não como dono)
     if (usuario.moradiaId) {
-      throw new HttpException('Usuário já faz parte de uma moradia', HttpStatus.BAD_REQUEST);
+      throw new HttpException('Usuário já faz parte de uma moradia como morador', HttpStatus.BAD_REQUEST);
     }
 
     // Verificar se o usuário já é morador desta moradia
@@ -363,6 +366,17 @@ export class MoradiasService {
 
     return resultado;
   }
+
+  // async uploadImage(file: Express.Multer.File, {
+  //   storage: diskStorage
+  // }) {
+  //   // try {
+  //   //   const result = await this.cloudinary.uploader.upload(file.path);
+  //   //   return result;
+  //   // } catch (error) {
+  //   //   throw new HttpException('Erro ao fazer upload da imagem', HttpStatus.BAD_REQUEST);
+  //   // }
+  // }
 
   async remove(id: number) {
     console.log(`🗑️  Iniciando remoção da moradia ID: ${id}`);
