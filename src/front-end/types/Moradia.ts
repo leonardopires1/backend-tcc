@@ -4,6 +4,7 @@ export default interface Moradia {
     descricao: string;
     endereco: string;
     valorMensalidade: number;
+    imagemUrl?: string; // Campo para URL da imagem da moradia
     criadoEm?: string;
     donoId?: number; // pode não vir em alguns selects da API
     // Alguns endpoints retornam o objeto dono ao invés de apenas donoId

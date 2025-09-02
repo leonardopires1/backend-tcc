@@ -16,7 +16,7 @@ model Usuario {
   telefone           String             @unique
   genero             String
   criadoEm           DateTime           @default(now())
-  moradiasDono       Moradia?           @relation("DonoMoradia") // Relacionamento para moradia onde é dono (um-para-um)
+  moradiasDono       Moradia[]          @relation("DonoMoradia") // Relacionamento para moradias onde é dono (um-para-muitos)
   moradia            Moradia?           @relation("UsuarioMoradia", fields: [moradiaId], references: [id]) // Relacionamento com a moradia
   moradiaId          Int? // Referência para a moradia
   atribuicoesTarefas AtribuicaoTarefa[]
@@ -34,8 +34,9 @@ model Moradia {
   endereco         String?
   criadoEm         DateTime        @default(now())
   valorMensalidade Float
-  dono             Usuario?        @relation("DonoMoradia", fields: [donoId], references: [id]) // Relacionamento com o dono (um-para-muitos)
-  donoId           Int?            @unique // Referência ao dono (cada usuário pode ser dono de apenas uma moradia)
+  imagemUrl        String?         // Campo para armazenar URL/nome da imagem da moradia
+  dono             Usuario        @relation("DonoMoradia", fields: [donoId], references: [id]) // Relacionamento com o dono (um-para-muitos)
+  donoId           Int // Referência ao dono (usuário pode ser dono de múltiplas moradias)
   moradores        Usuario[]       @relation("Moradores") // Relacionamento com vários usuários morando na mesma moradia
   usuarios         Usuario[]       @relation("UsuarioMoradia") // Relacionamento inverso para moradia em Usuario
   tarefas          Tarefa[]

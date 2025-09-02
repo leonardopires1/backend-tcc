@@ -18,6 +18,10 @@ export class CreateMoradiaDto {
   valorMensalidade: number;
 
   @IsOptional()
+  @IsString()
+  imagemUrl?: string;
+
+  @IsOptional()
   @IsArray()
   moradoresIds?: number[];
 

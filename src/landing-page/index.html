@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoomMate - Gerencie sua Moradia Compartilhada</title>
+    <meta name="description" content="O aplicativo perfeito para gerenciar moradias compartilhadas. Organize tarefas, contas, membros e muito mais de forma simples e eficiente.">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="RoomMate - Gerencie sua Moradia Compartilhada">
+    <meta property="og:description" content="O aplicativo perfeito para gerenciar moradias compartilhadas. Organize tarefas, contas, membros e muito mais.">
+    <meta property="og:image" content="./assets/preview.jpg">
+    <meta property="og:type" content="website">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <img src="./assets/icon.svg" alt="">
+                <span>RoomMate</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#inicio" class="nav-link">Início</a></li>
+                <li><a href="#recursos" class="nav-link">Recursos</a></li>
+                <li><a href="#como-funciona" class="nav-link">Como Funciona</a></li>
+                <li><a href="#download" class="nav-link">Download</a></li>
+                <li><a href="#contato" class="nav-link">Contato</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="inicio" class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 class="hero-title">
+                        Transforme sua moradia compartilhada em um lar organizado
+                    </h1>
+                    <p class="hero-description">
+                        O RoomMate é o aplicativo definitivo para gerenciar moradias compartilhadas. 
+                        Organize tarefas, divida contas, gerencie membros e mantenha tudo em harmonia.
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="#download" class="btn-primary">
+                            <i class="bx bx-download"></i>
+                            Baixar App
+                        </a>
+                        <a href="#como-funciona" class="btn-secondary">
+                            <i class="bx bx-play"></i>
+                            Ver Como Funciona
+                        </a>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat">
+                            <span class="stat-number">1000+</span>
+                            <span class="stat-label">Moradias</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">5000+</span>
+                            <span class="stat-label">Usuários</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">10k+</span>
+                            <span class="stat-label">Tarefas Organizadas</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <div class="phone-mockup">
+                        <div class="phone-frame">
+                            <div class="phone-screen">
+                                <div class="app-interface">
+                                    <div class="app-header">
+                                        <div class="app-title">Minha Moradia</div>
+                                        <div class="notification-dot"></div>
+                                    </div>
+                                    <div class="dashboard-card">
+                                        <div class="card-icon home"></div>
+                                        <div class="card-info">
+                                            <h3>Casa dos Estudantes</h3>
+                                            <p>4 membros • R$ 1.200/mês</p>
+                                        </div>
+                                    </div>
+                                    <div class="feature-list">
+                                        <div class="feature-item">
+                                            <div class="feature-icon tasks"></div>
+                                            <span>3 tarefas pendentes</span>
+                                        </div>
+                                        <div class="feature-item">
+                                            <div class="feature-icon bills"></div>
+                                            <span>R$ 350,00 em contas</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="recursos" class="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>Recursos Poderosos</h2>
+                <p>Tudo que você precisa para uma moradia compartilhada perfeita</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <i class="bx bx-task"></i>
+                    </div>
+                    <h3>Gestão de Tarefas</h3>
+                    <p>Organize e distribua tarefas domésticas entre os moradores de forma justa e transparente.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <i class="bx bx-wallet"></i>
+                    </div>
+                    <h3>Divisão de Contas</h3>
+                    <p>Divida contas de forma automática, acompanhe pagamentos e mantenha as finanças organizadas.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <i class="bx bx-group"></i>
+                    </div>
+                    <h3>Gestão de Membros</h3>
+                    <p>Adicione, remova e gerencie membros da moradia com controle total de permissões.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <i class="bx bx-bell"></i>
+                    </div>
+                    <h3>Notificações Inteligentes</h3>
+                    <p>Receba lembretes sobre tarefas, vencimentos de contas e atualizações importantes.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <i class="bx bx-shield-check"></i>
+                    </div>
+                    <h3>Regras Personalizadas</h3>
+                    <p>Defina regras específicas para sua moradia e mantenha a harmonia entre os moradores.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <i class="bx bx-map"></i>
+                    </div>
+                    <h3>Localização e Busca</h3>
+                    <p>Encontre moradias próximas ou cadastre a sua com integração ao Google Maps.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="como-funciona" class="how-it-works">
+        <div class="container">
+            <div class="section-header">
+                <h2>Como Funciona</h2>
+                <p>Em apenas 3 passos simples você está pronto para usar</p>
+            </div>
+            <div class="steps-container">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Crie sua conta</h3>
+                        <p>Cadastre-se rapidamente com apenas algumas informações básicas</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Configure sua moradia</h3>
+                        <p>Adicione informações da moradia e convide outros membros</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Organize tudo</h3>
+                        <p>Comece a gerenciar tarefas, contas e aproveite uma moradia organizada</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Screenshots Section -->
+    <section class="screenshots">
+        <div class="container">
+            <div class="section-header">
+                <h2>Interface Intuitiva</h2>
+                <p>Design pensado para facilitar seu dia a dia</p>
+            </div>
+            <div class="screenshots-grid">
+                <div class="screenshot-item">
+                    <div class="screenshot-mockup">
+                        <div class="mockup-header">
+                            <div class="mockup-dots">
+                                <span></span><span></span><span></span>
+                            </div>
+                        </div>
+                        <div class="mockup-content dashboard"></div>
+                    </div>
+                    <h4>Dashboard Principal</h4>
+                </div>
+                <div class="screenshot-item">
+                    <div class="screenshot-mockup">
+                        <div class="mockup-header">
+                            <div class="mockup-dots">
+                                <span></span><span></span><span></span>
+                            </div>
+                        </div>
+                        <div class="mockup-content tasks"></div>
+                    </div>
+                    <h4>Gestão de Tarefas</h4>
+                </div>
+                <div class="screenshot-item">
+                    <div class="screenshot-mockup">
+                        <div class="mockup-header">
+                            <div class="mockup-dots">
+                                <span></span><span></span><span></span>
+                            </div>
+                        </div>
+                        <div class="mockup-content profile"></div>
+                    </div>
+                    <h4>Perfil do Usuário</h4>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Download Section -->
+    <section id="download" class="download">
+        <div class="container">
+            <div class="download-content">
+                <div class="download-text">
+                    <h2>Pronto para começar?</h2>
+                    <p>Baixe o RoomMate agora e transforme sua experiência de moradia compartilhada</p>
+                    <div class="download-buttons">
+                        <a href="#" class="download-btn">
+                            <img src="./assets/google-play.png" alt="Download na Google Play" />
+                        </a>
+                        <a href="#" class="download-btn">
+                            <img src="./assets/app-store.png" alt="Download na App Store" />
+                        </a>
+                    </div>
+                    <div class="qr-code">
+                        <div class="qr-placeholder"></div>
+                        <p>Escaneie o QR Code para baixar</p>
+                    </div>
+                </div>
+                <div class="download-illustration">
+                    <div class="floating-elements">
+                        <div class="floating-card card-1">
+                            <i class="bx bx-check-circle"></i>
+                            <span>Tarefa Concluída</span>
+                        </div>
+                        <div class="floating-card card-2">
+                            <i class="bx bx-dollar-circle"></i>
+                            <span>Conta Paga</span>
+                        </div>
+                        <div class="floating-card card-3">
+                            <i class="bx bx-user-plus"></i>
+                            <span>Novo Membro</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contato" class="contact">
+        <div class="container">
+            <div class="contact-content">
+                <div class="contact-info">
+                    <h2>Entre em Contato</h2>
+                    <p>Tem dúvidas ou sugestões? Estamos aqui para ajudar!</p>
+                    <div class="contact-methods">
+                        <div class="contact-method">
+                            <i class="bx bx-envelope"></i>
+                            <span>contato@roommate.com</span>
+                        </div>
+                        <div class="contact-method">
+                            <i class="bx bx-phone"></i>
+                            <span>(11) 99999-9999</span>
+                        </div>
+                        <div class="contact-method">
+                            <i class="bx bx-map"></i>
+                            <span>São Paulo, Brasil</span>
+                        </div>
+                    </div>
+                    <div class="social-links">
+                        <a href="#" class="social-link">
+                            <i class="bx bxl-instagram"></i>
+                        </a>
+                        <a href="#" class="social-link">
+                            <i class="bx bxl-twitter"></i>
+                        </a>
+                        <a href="#" class="social-link">
+                            <i class="bx bxl-linkedin"></i>
+                        </a>
+                    </div>
+                </div>
+                <form class="contact-form">
+                    <div class="form-group">
+                        <input type="text" placeholder="Seu nome" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" placeholder="Seu e-mail" required>
+                    </div>
+                    <div class="form-group">
+                        <textarea placeholder="Sua mensagem" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        <i class="bx bx-send"></i>
+                        Enviar Mensagem
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <i class="bx bx-home-heart"></i>
+                        <span>RoomMate</span>
+                    </div>
+                    <p>Transformando moradias compartilhadas em lares organizados e harmoniosos.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Produto</h4>
+                    <ul>
+                        <li><a href="#recursos">Recursos</a></li>
+                        <li><a href="#como-funciona">Como Funciona</a></li>
+                        <li><a href="#download">Download</a></li>
+                        <li><a href="#">Preços</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Empresa</h4>
+                    <ul>
+                        <li><a href="#">Sobre</a></li>
+                        <li><a href="#contato">Contato</a></li>
+                        <li><a href="#">Carreiras</a></li>
+                        <li><a href="#">Blog</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#">Termos de Uso</a></li>
+                        <li><a href="#">Política de Privacidade</a></li>
+                        <li><a href="#">Cookies</a></li>
+                        <li><a href="#">LGPD</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 RoomMate. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

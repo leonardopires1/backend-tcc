@@ -1,0 +1,64 @@
+{
+  "name": "RoomMate Landing Page",
+  "version": "1.0.0",
+  "description": "Landing page moderna para o aplicativo RoomMate - sistema de gestão de moradias compartilhadas",
+  "author": "Equipe RoomMate",
+  "homepage": "https://roommate.com",
+  "keywords": [
+    "roommate",
+    "moradia compartilhada",
+    "gestão",
+    "tarefas",
+    "contas",
+    "aplicativo móvel"
+  ],
+  "features": {
+    "responsive": true,
+    "animations": true,
+    "lazy_loading": true,
+    "seo_optimized": true,
+    "performance_optimized": true
+  },
+  "technologies": {
+    "html5": "^1.0.0",
+    "css3": "^1.0.0",
+    "javascript": "ES6+",
+    "fonts": "Google Fonts (Inter)",
+    "icons": "BoxIcons"
+  },
+  "browser_support": {
+    "chrome": ">=60",
+    "firefox": ">=60",
+    "safari": ">=12",
+    "edge": ">=79",
+    "mobile": "iOS Safari >=12, Chrome Mobile >=60"
+  },
+  "performance_metrics": {
+    "first_contentful_paint": "<2s",
+    "largest_contentful_paint": "<3s",
+    "cumulative_layout_shift": "<0.1",
+    "first_input_delay": "<100ms"
+  },
+  "seo": {
+    "meta_description": "O aplicativo perfeito para gerenciar moradias compartilhadas. Organize tarefas, contas, membros e muito mais de forma simples e eficiente.",
+    "og_title": "RoomMate - Gerencie sua Moradia Compartilhada",
+    "og_description": "O aplicativo perfeito para gerenciar moradias compartilhadas. Organize tarefas, contas, membros e muito mais.",
+    "keywords": "moradia compartilhada, gestão de tarefas, divisão de contas, app mobile, república, estudantes"
+  },
+  "assets_needed": [
+    "assets/google-play.png",
+    "assets/app-store.png",
+    "assets/preview.jpg",
+    "assets/favicon.ico"
+  ],
+  "deployment": {
+    "recommended_servers": [
+      "Netlify",
+      "Vercel", 
+      "GitHub Pages",
+      "Firebase Hosting"
+    ],
+    "build_command": "No build required - static HTML/CSS/JS",
+    "publish_directory": "."
+  }
+}

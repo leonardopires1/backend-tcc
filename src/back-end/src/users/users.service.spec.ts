@@ -132,6 +132,13 @@ describe('UsersService', () => {
           id: true,
           nome: true,
           email: true,
+          moradiasDono: {
+            select: {
+              id: true,
+              nome: true,
+              endereco: true,
+            },
+          },
         },
       });
     });
@@ -158,7 +165,18 @@ describe('UsersService', () => {
           id: true,
           nome: true,
           email: true,
+          cpf: true,
+          telefone: true,
+          genero: true,
+          moradiaId: true,
           senha: true,
+          moradiasDono: {
+            select: {
+              id: true,
+              nome: true,
+              endereco: true,
+            },
+          },
         },
       });
     });

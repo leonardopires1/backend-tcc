@@ -1,5 +1,5 @@
 const API_CONFIG = {
-  BASE_URL: process.env.BASE_URL,
+  BASE_URL: process.env.EXPO_PUBLIC_BASE_URL,
 
   ENDPOINTS: {
     AUTH: {
@@ -36,6 +36,11 @@ const API_CONFIG = {
       UNLINK: (idMoradia: number, idRegra: number) =>
         `/regras-moradia/register/${idMoradia}/${idRegra}`,
     },
+    DESPESAS: {
+      BASE: "/despesas",
+      BY_MORADIA: (id: number) => `/despesas/moradia/${id}`,
+      DELETE: (id: number) => `/despesas/${id}`,
+    }
   },
 
   TIMEOUT: 150000, // 150 segundos (aumentado para evitar timeouts prematuros)

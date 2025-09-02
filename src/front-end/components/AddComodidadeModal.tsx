@@ -8,7 +8,7 @@ interface Props {
   onAddComodidade: (texto: string) => Promise<void>;
 }
 
-export const AddRegraComodidadeModal: React.FC<Props> = ({ visible, onClose, onAddComodidade }) => {
+export const AddComodidadeModal: React.FC<Props> = ({ visible, onClose, onAddComodidade }) => {
   const [comodidade, setComodidade] = useState('');
   const [loadingComodidade, setLoadingComodidade] = useState(false);
   const disable = loadingComodidade;
@@ -32,14 +32,13 @@ export const AddRegraComodidadeModal: React.FC<Props> = ({ visible, onClose, onA
       <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.card}>
           <Text style={styles.title}>Gerenciar</Text>
-          <Text style={styles.subtitle}>Adicione novas regras</Text>
+          <Text style={styles.subtitle}>Adicione novas comodidades</Text>
 
             <View style={styles.section}>
-              <Text style={styles.label}>Nova Regra</Text>
+              <Text style={styles.label}>Nova Comodidade</Text>
               <View style={styles.row}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Ex: Silêncio após 22h"
                   value={comodidade}
                   onChangeText={setComodidade}
                   editable={!disable}
@@ -134,4 +133,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddRegraComodidadeModal;
+export default AddComodidadeModal;

@@ -13,11 +13,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useMoradias } from "../hooks/useMoradias";
 import { useComodidades } from "../hooks/useComodidades";
 import { useAuth } from "../contexts/AuthContext";
-import AddRegraComodidadeModal from "../components/AddRegraModal";
+import AddComodidadeModal from "../components/AddComodidadeModal";
 import SelectRegrasModal from "../components/SelectRegrasModal";
 import { useRegras } from "../hooks/useRegras";
-import HttpService from "../services/httpService";
-import API_CONFIG from "../config/apiConfig";
 
 export default function PerfilMoradia({
   route,
@@ -41,9 +39,16 @@ export default function PerfilMoradia({
   const [modalVisible, setModalVisible] = useState(false); // modal antigo (comodidade/regra manual)
   const [modalRegrasVisible, setModalRegrasVisible] = useState(false); // seleção de regras pré-definidas
   const [updating, setUpdating] = useState(false);
-  const { comodidades, addComodidade, removeComodidade, fetchComodidades } =
-    useComodidades(moradiaId);
-  const { regras, regrasVinculadas, loading: loadingRegras, loadingVinculadas, fetchRegrasVinculadas, vincularRegra, desvincularRegra } = useRegras();
+  const { comodidades, addComodidade, removeComodidade } = useComodidades(moradiaId);
+  const {
+    regras,
+    regrasVinculadas,
+    loading: loadingRegras,
+    loadingVinculadas,
+    fetchRegrasVinculadas,
+    vincularRegra,
+    desvincularRegra,
+  } = useRegras();
 
   // Carrega a moradia (direta ou por id)
   useEffect(() => {
@@ -58,28 +63,32 @@ export default function PerfilMoradia({
   }, [moradia, moradiaId, moradias]);
 
   const avaliarDono = useCallback(() => {
-    const donoFromId = !!(dataMoradia?.donoId && user?.id && dataMoradia.donoId === user.id);
-    const donoFromObject = !!(dataMoradia?.dono?.id && user?.id && dataMoradia.dono?.id === user.id);
+    const donoFromId = !!(
+      dataMoradia?.donoId &&
+      user?.id &&
+      dataMoradia.donoId === user.id
+    );
+    const donoFromObject = !!(
+      dataMoradia?.dono?.id &&
+      user?.id &&
+      dataMoradia.dono?.id === user.id
+    );
     const isOwner = donoFromId || donoFromObject;
     setDonoMoradia(isOwner);
     if (__DEV__) {
-      console.log('[PerfilMoradia] avaliarDono', { moradiaId: dataMoradia?.id, donoId: dataMoradia?.donoId, donoObj: dataMoradia?.dono, userId: user?.id, isOwner });
+      console.log("[PerfilMoradia] avaliarDono", {
+        moradiaId: dataMoradia?.id,
+        donoId: dataMoradia?.donoId,
+        donoObj: dataMoradia?.dono,
+        userId: user?.id,
+        isOwner,
+      });
     }
   }, [dataMoradia?.donoId, dataMoradia?.dono, user?.id]);
 
   useEffect(() => {
     avaliarDono();
   }, [avaliarDono]);
-
-  // Handlers para adicionar regras e comodidades
-  // Adição de regras antigas (livre) - mantida caso queira usar
-  const handleAddRegra = async (texto: string) => {
-    if (!dataMoradia) return;
-    // Aqui poderia haver endpoint diferente caso exista cadastro manual de regras; mantido para compatibilidade
-    setDataMoradia((prev) =>
-      prev ? { ...prev, regras: [...(prev.regras || []), texto] } : prev
-    );
-  };
 
   // Carrega regras vinculadas quando tiver moradia
   useEffect(() => {
@@ -89,7 +98,8 @@ export default function PerfilMoradia({
   }, [dataMoradia?.id]);
 
   const handleSelectRegra = async (regraId: number) => {
-    if (!dataMoradia || regrasVinculadas.some(r => r.regraId === regraId)) return;
+    if (!dataMoradia || regrasVinculadas.some((r) => r.regraId === regraId))
+      return;
     setUpdating(true);
     await vincularRegra(dataMoradia.id, regraId);
     setUpdating(false);
@@ -140,11 +150,14 @@ export default function PerfilMoradia({
       <ScrollView style={styles.scrollView}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.unifiedBackBtn} onPress={() => navigation.goBack()}>
+          <TouchableOpacity
+            style={styles.unifiedBackBtn}
+            onPress={() => navigation.goBack()}
+          >
             <Ionicons name="chevron-back" size={22} color="#2563eb" />
             <Text style={styles.unifiedBackText}>Voltar</Text>
           </TouchableOpacity>
-          <View style={{ flex:1 }} />
+          <View style={{ flex: 1 }} />
           <TouchableOpacity style={styles.heartButton}>
             <Text style={styles.heartIcon}>♡</Text>
           </TouchableOpacity>
@@ -197,44 +210,64 @@ export default function PerfilMoradia({
           )}
 
           {/* Comodidades (via hook) */}
-          {comodidades.length ? (
-            comodidades.map((c) => (
-              <View style={styles.amenityItem} key={`comodidade-${c.id}`}>
-                <View style={styles.amenityIcon}>
-                  <Text style={styles.checkIcon}>✓</Text>
+          {comodidades.length
+            ? comodidades.map((c) => (
+                <View style={styles.amenityItem} key={`comodidade-${c.id}`}>
+                  <View style={styles.amenityIcon}>
+                    <Text style={styles.checkIcon}>✓</Text>
+                  </View>
+                  <Text style={[styles.amenityText, { flex: 1 }]}>
+                    {c.nome}
+                  </Text>
+                  {donoMoradia && (
+                    <TouchableOpacity
+                      style={styles.removeButton}
+                      onPress={() => handleRemoveComodidade(c.id)}
+                      disabled={updating}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={20}
+                        color="#dc2626"
+                      />
+                    </TouchableOpacity>
+                  )}
                 </View>
-                <Text style={[styles.amenityText, { flex: 1 }]}>{c.nome}</Text>
-                {donoMoradia && (
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() => handleRemoveComodidade(c.id)}
-                    disabled={updating}
-                  >
-                    <Ionicons name="trash-outline" size={20} color="#dc2626" />
-                  </TouchableOpacity>
-                )}
-              </View>
-            ))
-          ) : (
-            null
-          )}
+              ))
+            : null}
 
           {/* Regras vinculadas */}
           {loadingVinculadas ? (
-            <Text style={{ color: '#666', marginBottom: 16 }}>Carregando regras...</Text>
+            <Text style={{ color: "#666", marginBottom: 16 }}>
+              Carregando regras...
+            </Text>
           ) : (
-            regrasVinculadas.map(rv => (
+            regrasVinculadas.map((rv) => (
               <View style={styles.amenityItem} key={`regra-${rv.regraId}`}>
-                <View style={[styles.amenityIcon, { backgroundColor: '#2563eb' }] }>
+                <View
+                  style={[styles.amenityIcon, { backgroundColor: "#2563eb" }]}
+                >
                   <Text style={styles.checkIcon}>R</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.amenityText}>{rv.titulo}</Text>
-                  {rv.descricao ? <Text style={{ fontSize: 12, color: '#666' }}>{rv.descricao}</Text> : null}
+                  {rv.descricao ? (
+                    <Text style={{ fontSize: 12, color: "#666" }}>
+                      {rv.descricao}
+                    </Text>
+                  ) : null}
                 </View>
                 {donoMoradia && (
-                  <TouchableOpacity style={styles.removeButton} onPress={() => handleRemoveRegra(rv.regraId)} disabled={updating}>
-                    <Ionicons name="close-circle-outline" size={20} color="#dc2626" />
+                  <TouchableOpacity
+                    style={styles.removeButton}
+                    onPress={() => handleRemoveRegra(rv.regraId)}
+                    disabled={updating}
+                  >
+                    <Ionicons
+                      name="close-circle-outline"
+                      size={20}
+                      color="#dc2626"
+                    />
                   </TouchableOpacity>
                 )}
               </View>
@@ -242,13 +275,24 @@ export default function PerfilMoradia({
           )}
 
           {/* Empty state para visitante */}
-          {!donoMoradia && !updating && !loadingVinculadas && comodidades.length === 0 && regrasVinculadas.length === 0 && (
-            <View style={styles.emptyBox}>
-              <Ionicons name="alert-circle-outline" size={28} color="#6b7280" style={{ marginBottom: 8 }} />
-              <Text style={styles.emptyTitle}>Nada por aqui ainda</Text>
-              <Text style={styles.emptySubtitle}>Esta república ainda não cadastrou regras ou comodidades.</Text>
-            </View>
-          )}
+          {!donoMoradia &&
+            !updating &&
+            !loadingVinculadas &&
+            comodidades.length === 0 &&
+            regrasVinculadas.length === 0 && (
+              <View style={styles.emptyBox}>
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={28}
+                  color="#6b7280"
+                  style={{ marginBottom: 8 }}
+                />
+                <Text style={styles.emptyTitle}>Nada por aqui ainda</Text>
+                <Text style={styles.emptySubtitle}>
+                  Esta república ainda não cadastrou regras ou comodidades.
+                </Text>
+              </View>
+            )}
 
           {/* Rooms */}
 
@@ -273,10 +317,9 @@ export default function PerfilMoradia({
       </View>
       {donoMoradia && (
         <>
-          <AddRegraComodidadeModal
+          <AddComodidadeModal
             visible={modalVisible}
             onClose={() => setModalVisible(false)}
-            onAddRegra={handleAddRegra}
             onAddComodidade={handleAddComodidade}
           />
           <SelectRegrasModal
@@ -285,7 +328,7 @@ export default function PerfilMoradia({
             regras={regras}
             loading={loadingRegras}
             // SelectRegrasModal espera number[]
-            selectedIds={regrasVinculadas.map(r => r.regraId)}
+            selectedIds={regrasVinculadas.map((r) => r.regraId)}
             onSelect={handleSelectRegra}
           />
         </>
@@ -313,47 +356,47 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 12,
     paddingTop: 16,
     paddingBottom: 8,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
   },
   unifiedBackBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#eef5ff',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#eef5ff",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#dbeafe'
+    borderColor: "#dbeafe",
   },
   unifiedBackText: {
-    color: '#2563eb',
-    fontWeight: '600',
+    color: "#2563eb",
+    fontWeight: "600",
     marginLeft: 4,
-    fontSize: 14
+    fontSize: 14,
   },
   emptyBox: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: "#F1F5F9",
     borderRadius: 12,
     padding: 20,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 8,
-    marginBottom: 24
+    marginBottom: 24,
   },
   emptyTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#334155',
-    marginBottom: 4
+    fontWeight: "600",
+    color: "#334155",
+    marginBottom: 4,
   },
   emptySubtitle: {
     fontSize: 13,
-    color: '#64748b',
-    textAlign: 'center'
+    color: "#64748b",
+    textAlign: "center",
   },
   backButton: {
     padding: 8,

@@ -8,7 +8,6 @@ import {
 import { CreateMoradiaDto } from './dto/create-moradia.dto';
 import { UpdateMoradiaDto } from './dto/update-moradia.dto';
 import { PrismaService } from 'src/database/prisma.service';
-import { Prisma } from '@prisma/client';
 import { RegraMoradiaService } from 'src/regra-moradia/regra-moradia.service';
 import { ComodidadesMoradiaService } from 'src/comodidades-moradia/comodidades-moradia.service';
 
@@ -27,6 +26,7 @@ export class MoradiasService {
       endereco,
       donoId,
       valorMensalidade,
+      imagemUrl,
       moradoresIds = [],
       tarefas = [],
       despesas = [],
@@ -41,30 +41,6 @@ export class MoradiasService {
     if (!dono) {
       throw new HttpException(
         'Usuário donoId não encontrado.',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    // Verifica se o usuário já possui uma moradia como dono
-    const moradiaExistente = await this.prisma.moradia.findFirst({
-      where: { donoId: donoId },
-    });
-    if (moradiaExistente) {
-      throw new HttpException(
-        'Este usuário já é dono de uma moradia. Cada usuário pode ser dono de apenas uma moradia.',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    // Verifica se o dono já está em outra moradia (mas não se ele será o dono desta)
-    const donoOcupado = await this.prisma.usuario.findUnique({
-      where: { id: donoId },
-      select: { moradiaId: true },
-    });
-
-    if (donoOcupado?.moradiaId) {
-      throw new HttpException(
-        'O dono já faz parte de outra moradia.',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -94,6 +70,7 @@ export class MoradiasService {
           nome,
           endereco,
           valorMensalidade,
+          imagemUrl,
           dono: { connect: { id: donoId } },
           tarefas: {
             create: tarefas.map((tarefa) => ({
@@ -119,24 +96,18 @@ export class MoradiasService {
               descricao: comodidade.descricao,
             })),
           },
-          // Adiciona o dono como morador na criação
-          moradores: {
-            connect: { id: donoId },
-          },
+          // REMOVIDO: Dono não é mais automaticamente adicionado como morador
+          // Ele pode ser adicionado separadamente se necessário
         },
       });
 
       console.log(`🏠 Moradia criada: ${novaMoradia.id} - Dono: ${donoId}`);
 
-      // Atualiza o usuário dono para vinculá-lo à nova moradia
-      await prisma.usuario.update({
-        where: { id: donoId },
-        data: {
-          moradiaId: novaMoradia.id,
-        },
-      });
-
-      console.log(`👤 Usuário ${donoId} vinculado à moradia ${novaMoradia.id}`);
+      // REMOVIDO: Não vincula mais o dono através do moradiaId
+      // Isso permite que o dono seja dono de múltiplas moradias
+      // e também possa ser morador em outras moradias
+      
+      console.log(`👤 Usuário ${donoId} definido como dono da moradia ${novaMoradia.id}`);
 
       // Atualiza os demais usuários para vinculá-los à nova moradia (se houver)
       if (moradoresIds.length > 0) {
@@ -198,6 +169,7 @@ export class MoradiasService {
         descricao: true,
         endereco: true,
         valorMensalidade: true,
+        imagemUrl: true, // Incluir imagem da moradia
         dono: { select: { id: true, nome: true, email: true } },
         moradores: { 
           select: { 
@@ -216,8 +188,8 @@ export class MoradiasService {
   }
 
   async findAllByDono(donoId: number) {
-    // Como cada usuário pode ser dono de apenas uma moradia, usamos findFirst
-    const moradia = await this.prisma.moradia.findFirst({
+    // Usuário pode ser dono de múltiplas moradias, usamos findMany
+    const moradias = await this.prisma.moradia.findMany({
       where: { donoId },
       select: {
         id: true,
@@ -225,6 +197,7 @@ export class MoradiasService {
         descricao: true,
         endereco: true,
         valorMensalidade: true,
+        imagemUrl: true, // Incluir imagem da moradia
         dono: { select: { id: true, nome: true, email: true } },
         moradores: {
           select: { id: true, nome: true, email: true }
@@ -232,8 +205,7 @@ export class MoradiasService {
       }
     });
     
-    // Retorna um array para manter compatibilidade com a API existente
-    return moradia ? [moradia] : [];
+    return moradias;
   }
 
   async findOne(id: number) {
@@ -245,6 +217,7 @@ export class MoradiasService {
         endereco: true,
         descricao: true,
         valorMensalidade: true,
+        imagemUrl: true, // Incluir imagem da moradia
         regrasMoradia: true,
         comodidades: true,
         dono: { select: { id: true, nome: true, email: true } },
@@ -290,6 +263,7 @@ export class MoradiasService {
           nome: true,
           endereco: true,
           valorMensalidade: true,
+          imagemUrl: true, // Incluir imagem da moradia
           dono: { select: { id: true, nome: true, email: true } },
         },
       });
@@ -326,15 +300,24 @@ export class MoradiasService {
     // Verificar se o usuário existe
     const usuario = await this.prisma.usuario.findUnique({
       where: { id: usuarioId },
+      include: {
+        moradiasDono: true, // Incluir moradias onde é dono
+      }
     });
 
     if (!usuario) {
       throw new HttpException('Usuário não encontrado', HttpStatus.NOT_FOUND);
     }
 
-    // Verificar se o usuário já está em uma moradia
+    // Verificar se o usuário já é dono desta moradia específica
+    const jaDonoDesta = usuario.moradiasDono.some(m => m.id === moradiaId);
+    if (jaDonoDesta) {
+      throw new HttpException('Usuário é dono desta moradia e não pode ser adicionado como morador', HttpStatus.BAD_REQUEST);
+    }
+
+    // Verificar se o usuário já está em uma moradia COMO MORADOR (não como dono)
     if (usuario.moradiaId) {
-      throw new HttpException('Usuário já faz parte de uma moradia', HttpStatus.BAD_REQUEST);
+      throw new HttpException('Usuário já faz parte de uma moradia como morador', HttpStatus.BAD_REQUEST);
     }
 
     // Verificar se o usuário já é morador desta moradia
@@ -369,6 +352,7 @@ export class MoradiasService {
           nome: true,
           endereco: true,
           valorMensalidade: true,
+          imagemUrl: true, // Incluir imagem da moradia
           moradores: {
             select: {
               id: true,
@@ -404,6 +388,7 @@ export class MoradiasService {
             id: true,
             nome: true,
             endereco: true,
+            imagemUrl: true, // Incluir imagem da moradia
           },
         });
         console.log(`✅ Moradia removida:`, moradiaRemovida);
