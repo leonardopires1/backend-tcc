@@ -8,7 +8,6 @@ import {
 import { CreateMoradiaDto } from './dto/create-moradia.dto';
 import { UpdateMoradiaDto } from './dto/update-moradia.dto';
 import { PrismaService } from 'src/database/prisma.service';
-import { Prisma } from '@prisma/client';
 import { RegraMoradiaService } from 'src/regra-moradia/regra-moradia.service';
 import { ComodidadesMoradiaService } from 'src/comodidades-moradia/comodidades-moradia.service';
 
@@ -41,30 +40,6 @@ export class MoradiasService {
     if (!dono) {
       throw new HttpException(
         'Usuário donoId não encontrado.',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    // Verifica se o usuário já possui uma moradia como dono
-    const moradiaExistente = await this.prisma.moradia.findFirst({
-      where: { donoId: donoId },
-    });
-    if (moradiaExistente) {
-      throw new HttpException(
-        'Este usuário já é dono de uma moradia. Cada usuário pode ser dono de apenas uma moradia.',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    // Verifica se o dono já está em outra moradia (mas não se ele será o dono desta)
-    const donoOcupado = await this.prisma.usuario.findUnique({
-      where: { id: donoId },
-      select: { moradiaId: true },
-    });
-
-    if (donoOcupado?.moradiaId) {
-      throw new HttpException(
-        'O dono já faz parte de outra moradia.',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -216,8 +191,8 @@ export class MoradiasService {
   }
 
   async findAllByDono(donoId: number) {
-    // Como cada usuário pode ser dono de apenas uma moradia, usamos findFirst
-    const moradia = await this.prisma.moradia.findFirst({
+    // Usuário pode ser dono de múltiplas moradias, usamos findMany
+    const moradias = await this.prisma.moradia.findMany({
       where: { donoId },
       select: {
         id: true,
@@ -232,8 +207,7 @@ export class MoradiasService {
       }
     });
     
-    // Retorna um array para manter compatibilidade com a API existente
-    return moradia ? [moradia] : [];
+    return moradias;
   }
 
   async findOne(id: number) {

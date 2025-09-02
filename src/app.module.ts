@@ -15,6 +15,7 @@ import { HealthModule } from './health/health.module';
 import { AuthGuard } from './auth/auth.guard';
 import { appConfig, databaseConfig, jwtConfig } from './config/configuration';
 import { TarefasUsuarioModule } from './tarefas-usuario/tarefas-usuario.module';
+import { DespesasModule } from './despesas/despesas.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { TarefasUsuarioModule } from './tarefas-usuario/tarefas-usuario.module';
     ComodidadesMoradiaModule,
     HealthModule,
     TarefasUsuarioModule,
+    DespesasModule,
   ],
   providers: [
     // AuthGuard global (todas as rotas protegidas por padrão)
