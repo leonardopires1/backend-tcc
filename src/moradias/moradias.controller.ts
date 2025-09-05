@@ -1,10 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpException, HttpStatus, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpException, HttpStatus, UseInterceptors, UploadedFile, Res, StreamableFile, Request } from '@nestjs/common';
 import { MoradiasService } from './moradias.service';
 import { CreateMoradiaDto } from './dto/create-moradia.dto';
 import { UpdateMoradiaDto } from './dto/update-moradia.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { Observable } from 'rxjs';
+import { Response } from 'express';
+import { createReadStream, existsSync } from 'fs';
+import { join } from 'path';
 
 @Controller('moradias')
 export class MoradiasController {
@@ -60,6 +62,24 @@ export class MoradiasController {
     }
   }
 
+  @Get('user')
+  async findByUser(@Request() req: any) {
+    try {
+      // Extrair o userId do token JWT (assumindo que o middleware de auth já processou)
+      const userId = req.user?.sub || req.user?.id;
+      
+      if (!userId) {
+        throw new HttpException('Token de usuário inválido', HttpStatus.UNAUTHORIZED);
+      }
+      
+      console.log(`[DEBUG] Buscando moradia para usuário ${userId}`);
+      return await this.moradiasService.findByUser(+userId);
+    } catch (error) {
+      console.error(`[ERROR] Erro ao buscar moradia por usuário:`, error);
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     try {
@@ -98,6 +118,7 @@ export class MoradiasController {
       }
     })
   }))
+
   async uploadImage(@Param('id') moradiaId: string, @UploadedFile() file: Express.Multer.File) {
     console.log('📁 Upload de imagem recebido:', { 
       moradiaId, 
@@ -112,16 +133,17 @@ export class MoradiasController {
         throw new Error('Nenhum arquivo foi enviado');
       }
 
-      // Construir a URL da imagem para o frontend
-      const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-      const imagemUrl = `${baseUrl}/images/moradias/${file.filename}`;
+      // Salvar apenas o nome do arquivo (sem URL completa)
+      const imagemFileName = file.filename;
       
-      // Atualizar a moradia com a URL da imagem
-      const updateResult = await this.moradiasService.update(+moradiaId, { imagemUrl });
+      // Atualizar a moradia com o nome do arquivo da imagem
+      const updateResult = await this.moradiasService.update(+moradiaId, { 
+        imagemUrl: imagemFileName // Salvamos apenas o nome do arquivo
+      });
       
       console.log('✅ Moradia atualizada com sucesso:', { 
         moradiaId, 
-        imagemUrl, 
+        imagemFileName, 
         filename: file.filename,
         originalPath: file.path 
       });
@@ -129,7 +151,7 @@ export class MoradiasController {
       return {
         success: true,
         imagePath: file.path,
-        imagemUrl: imagemUrl,
+        imagemFileName: imagemFileName,
         filename: file.filename,
         originalPath: file.path,
         message: 'Imagem enviada e moradia atualizada com sucesso'
@@ -137,6 +159,46 @@ export class MoradiasController {
     } catch (error) {
       console.error('❌ Erro no upload da imagem:', error);
       throw new HttpException(`Erro ao fazer upload da imagem: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  // Novo endpoint para servir a imagem diretamente
+  @Get(':id/image')
+  async getMoradiaImage(@Param('id') id: string, @Res({ passthrough: true }) res: Response) {
+    try {
+      const moradia = await this.moradiasService.findOne(+id);
+      
+      if (!moradia.imagemUrl) {
+        throw new HttpException('Moradia não possui imagem', HttpStatus.NOT_FOUND);
+      }
+
+      const imagePath = join(process.cwd(), 'images', 'moradias', moradia.imagemUrl);
+      
+      if (!existsSync(imagePath)) {
+        throw new HttpException('Arquivo de imagem não encontrado', HttpStatus.NOT_FOUND);
+      }
+
+      const file = createReadStream(imagePath);
+      
+      // Definir o tipo de conteúdo baseado na extensão do arquivo
+      const ext = moradia.imagemUrl.split('.').pop()?.toLowerCase();
+      const mimeTypes: { [key: string]: string } = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp'
+      };
+      
+      res.set({
+        'Content-Type': mimeTypes[ext || 'jpg'] || 'image/jpeg',
+        'Content-Disposition': `inline; filename="${moradia.imagemUrl}"`,
+      });
+
+      return new StreamableFile(file);
+    } catch (error) {
+      console.error(`❌ Erro ao buscar imagem da moradia ${id}:`, error);
+      throw new HttpException(error.message, HttpStatus.NOT_FOUND);
     }
   }
 
@@ -149,17 +211,22 @@ export class MoradiasController {
     }
   }
 
-  // Endpoint de debug para verificar se a imagem está sendo salva corretamente
+  // Endpoint modificado para retornar informações da imagem
   @Get(':id/debug-image')
   async debugImage(@Param('id') id: string) {
     try {
       const moradia = await this.moradiasService.findOne(+id);
+      const imagePath = moradia.imagemUrl ? join(process.cwd(), 'images', 'moradias', moradia.imagemUrl) : null;
+      const imageExists = imagePath ? existsSync(imagePath) : false;
+      
       return {
         moradiaId: id,
-        imagemUrl: moradia.imagemUrl,
+        imagemFileName: moradia.imagemUrl,
         hasImage: !!moradia.imagemUrl,
-        imagePath: moradia.imagemUrl,
-        debug: 'Endpoint de debug para verificar imagemUrl'
+        imageExists: imageExists,
+        imagePath: imagePath,
+        imageEndpoint: moradia.imagemUrl ? `/moradias/${id}/image` : null,
+        debug: 'Endpoint de debug para verificar arquivo de imagem'
       };
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.NOT_FOUND);

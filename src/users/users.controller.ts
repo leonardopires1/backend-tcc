@@ -11,6 +11,8 @@ import {
   UploadedFile,
   HttpStatus,
   HttpException,
+  Res,
+  StreamableFile,
 } from '@nestjs/common';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { 
@@ -26,6 +28,9 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { Public, CurrentUser } from '../common/decorators/user.decorator';
 import { diskStorage } from 'multer';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Response } from 'express';
+import { createReadStream, existsSync } from 'fs';
+import { join } from 'path';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -121,22 +126,107 @@ export class UsersController {
       destination: './images/avatars',
       filename: (req, file, cb) => {
         const userId = req.params.id;
-        const fileName = `${userId}-${Date.now()}.${file.originalname.split('.').pop()}`;
+        const fileName = `avatar_${userId}_${Date.now()}.${file.originalname.split('.').pop()}`;
         cb(null, fileName);
       }
     })
   }))
   async uploadAvatar(@UploadedFile() file: Express.Multer.File, @Param('id') id: string) {
-    if (!file) {
-      throw new HttpException('Arquivo não enviado', HttpStatus.BAD_REQUEST);
+    console.log('📁 Upload de avatar recebido:', { 
+      userId: id, 
+      filename: file?.filename, 
+      originalName: file?.originalname,
+      path: file?.path,
+      size: file?.size 
+    });
+
+    try {
+      if (!file) {
+        throw new HttpException('Arquivo não enviado', HttpStatus.BAD_REQUEST);
+      }
+
+      // Salvar apenas o nome do arquivo (sem URL completa)
+      const avatarFileName = file.filename;
+
+      // Atualizar o usuário com o nome do arquivo do avatar
+      const updatedUser = await this.usersService.updateAvatar(id, avatarFileName);
+
+      console.log('✅ Avatar do usuário atualizado com sucesso:', { 
+        userId: id, 
+        avatarFileName, 
+        filename: file.filename,
+        updatedUser
+      });
+
+      return {
+        success: true,
+        avatarFileName: avatarFileName,
+        filename: file.filename,
+        user: updatedUser,
+        message: 'Avatar enviado e usuário atualizado com sucesso'
+      };
+    } catch (error) {
+      console.error('❌ Erro no upload do avatar:', error);
+      
+      // Tratamento mais específico de erros
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      
+      if (error.code === 'P2002') {
+        throw new HttpException('Usuário não encontrado', HttpStatus.NOT_FOUND);
+      }
+      
+      if (error.code === 'P2025') {
+        throw new HttpException('Usuário não encontrado para atualização', HttpStatus.NOT_FOUND);
+      }
+      
+      const errorMessage = error.message || 'Erro interno do servidor';
+      throw new HttpException(`Erro ao fazer upload do avatar: ${errorMessage}`, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-    // URL pública ou caminho relativo
-    const avatarUrl = `/uploads/${file.filename}`;
+  }
 
-    // Salva no banco de dados
-    await this.usersService.updateAvatar(id, avatarUrl);
+  // Novo endpoint para servir o avatar diretamente
+  @Get(':id/avatar')
+  @ApiOperation({ summary: 'Obter avatar do usuário' })
+  @ApiResponse({ status: 200, description: 'Avatar do usuário' })
+  @ApiResponse({ status: 404, description: 'Avatar não encontrado' })
+  async getUserAvatar(@Param('id') id: string, @Res({ passthrough: true }) res: Response) {
+    try {
+      const user = await this.usersService.findOneById(+id);
+      
+      if (!user.avatarUrl) {
+        throw new HttpException('Usuário não possui avatar', HttpStatus.NOT_FOUND);
+      }
 
-    return { avatarUrl };
+      const avatarPath = join(process.cwd(), 'images', 'avatars', user.avatarUrl);
+      
+      if (!existsSync(avatarPath)) {
+        throw new HttpException('Arquivo de avatar não encontrado', HttpStatus.NOT_FOUND);
+      }
+
+      const file = createReadStream(avatarPath);
+      
+      // Definir o tipo de conteúdo baseado na extensão do arquivo
+      const ext = user.avatarUrl.split('.').pop()?.toLowerCase();
+      const mimeTypes: { [key: string]: string } = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp'
+      };
+      
+      res.set({
+        'Content-Type': mimeTypes[ext || 'jpg'] || 'image/jpeg',
+        'Content-Disposition': `inline; filename="${user.avatarUrl}"`,
+      });
+
+      return new StreamableFile(file);
+    } catch (error) {
+      console.error(`❌ Erro ao buscar avatar do usuário ${id}:`, error);
+      throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+    }
   }
 
   @Delete(':id')

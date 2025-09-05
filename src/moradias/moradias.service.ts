@@ -194,6 +194,72 @@ export class MoradiasService {
     return moradias;
   }
 
+  async findByUser(userId: number) {
+    // Buscar moradia onde o usuário é morador OU dono
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: userId },
+      include: {
+        moradia: {
+          select: {
+            id: true,
+            nome: true,
+            descricao: true,
+            endereco: true,
+            valorMensalidade: true,
+            imagemUrl: true,
+            dono: { select: { id: true, nome: true, email: true } },
+            moradores: {
+              select: { 
+                id: true, 
+                nome: true, 
+                email: true, 
+                telefone: true, 
+                genero: true 
+              }
+            }
+          }
+        },
+        moradiasDono: {
+          select: {
+            id: true,
+            nome: true,
+            descricao: true,
+            endereco: true,
+            valorMensalidade: true,
+            imagemUrl: true,
+            dono: { select: { id: true, nome: true, email: true } },
+            moradores: {
+              select: { 
+                id: true, 
+                nome: true, 
+                email: true, 
+                telefone: true, 
+                genero: true 
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    // Se é morador de uma moradia, retornar essa moradia
+    if (usuario.moradia) {
+      return [usuario.moradia];
+    }
+
+    // Se é dono de moradias, retornar a primeira (ou todas se necessário)
+    if (usuario.moradiasDono && usuario.moradiasDono.length > 0) {
+      return usuario.moradiasDono;
+    }
+
+    // Usuário não tem moradia
+    return [];
+  }
+
   async findOne(id: number) {
     const moradia = await this.prisma.moradia.findUnique({
       where: { id },
