@@ -99,18 +99,43 @@ export class MoradiasController {
     })
   }))
   async uploadImage(@Param('id') moradiaId: string, @UploadedFile() file: Express.Multer.File) {
+    console.log('📁 Upload de imagem recebido:', { 
+      moradiaId, 
+      filename: file?.filename, 
+      originalName: file?.originalname,
+      path: file?.path,
+      size: file?.size 
+    });
+    
     try {
+      if (!file) {
+        throw new Error('Nenhum arquivo foi enviado');
+      }
+
+      // Construir a URL da imagem para o frontend
+      const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+      const imagemUrl = `${baseUrl}/images/moradias/${file.filename}`;
+      
       // Atualizar a moradia com a URL da imagem
-      const imagemUrl = file.path;
-      await this.moradiasService.update(+moradiaId, { imagemUrl });
+      const updateResult = await this.moradiasService.update(+moradiaId, { imagemUrl });
+      
+      console.log('✅ Moradia atualizada com sucesso:', { 
+        moradiaId, 
+        imagemUrl, 
+        filename: file.filename,
+        originalPath: file.path 
+      });
       
       return {
         success: true,
         imagePath: file.path,
         imagemUrl: imagemUrl,
+        filename: file.filename,
+        originalPath: file.path,
         message: 'Imagem enviada e moradia atualizada com sucesso'
       };
     } catch (error) {
+      console.error('❌ Erro no upload da imagem:', error);
       throw new HttpException(`Erro ao fazer upload da imagem: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -119,6 +144,23 @@ export class MoradiasController {
   async remove(@Param('id') id: string) {
     try {
       return await this.moradiasService.remove(+id);
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+    }
+  }
+
+  // Endpoint de debug para verificar se a imagem está sendo salva corretamente
+  @Get(':id/debug-image')
+  async debugImage(@Param('id') id: string) {
+    try {
+      const moradia = await this.moradiasService.findOne(+id);
+      return {
+        moradiaId: id,
+        imagemUrl: moradia.imagemUrl,
+        hasImage: !!moradia.imagemUrl,
+        imagePath: moradia.imagemUrl,
+        debug: 'Endpoint de debug para verificar imagemUrl'
+      };
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.NOT_FOUND);
     }

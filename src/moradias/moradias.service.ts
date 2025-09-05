@@ -231,12 +231,13 @@ export class MoradiasService {
   }
 
   async update(id: number, updateMoradiaDto: UpdateMoradiaDto) {
-    const { nome, endereco, donoId, valorMensalidade } = updateMoradiaDto;
+    const { nome, endereco, donoId, valorMensalidade, imagemUrl } = updateMoradiaDto;
 
     const data: any = {
       ...(nome && { nome }),
       ...(endereco && { endereco }),
       ...(valorMensalidade && { valorMensalidade }),
+      ...(imagemUrl !== undefined && { imagemUrl }), // Permite atualizar imagemUrl mesmo que seja null
       ...(donoId && { dono: { connect: { id: donoId } } }),
     };
 
