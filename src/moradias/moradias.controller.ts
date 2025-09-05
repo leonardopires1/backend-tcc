@@ -23,6 +23,18 @@ export class MoradiasController {
     try {
       return await this.moradiasService.create(createMoradiaDto);
     } catch (error) {
+      console.error('Erro ao criar moradia:', error);
+      
+      // Verifica se é erro de constraint de regras duplicadas
+      if (error.message && error.message.includes('Unique constraint failed on the fields: (`moradiaId`,`regraId`)')) {
+        throw new HttpException('Erro: Tentativa de adicionar regra duplicada à moradia.', HttpStatus.BAD_REQUEST);
+      }
+      
+      // Verifica outros erros de constraint
+      if (error.message && error.message.includes('Unique constraint failed')) {
+        throw new HttpException('Erro: Violação de restrição única no banco de dados.', HttpStatus.BAD_REQUEST);
+      }
+      
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }

@@ -87,14 +87,14 @@ export class MoradiasService {
               tipo: despesa.tipo,
             })),
           },
-          regrasMoradia: {
-            connect: regras.id.map((id) => ({ id })),
-          },
+
           comodidades: {
-            create: comodidades.map((comodidade) => ({
-              nome: comodidade.nome,
-              descricao: comodidade.descricao,
-            })),
+            create: comodidades
+              .filter((comodidade) => comodidade.nome && comodidade.nome.trim())
+              .map((comodidade) => ({
+                nome: comodidade.nome,
+                descricao: comodidade.descricao,
+              })),
           },
           // REMOVIDO: Dono não é mais automaticamente adicionado como morador
           // Ele pode ser adicionado separadamente se necessário
@@ -102,10 +102,6 @@ export class MoradiasService {
       });
 
       console.log(`🏠 Moradia criada: ${novaMoradia.id} - Dono: ${donoId}`);
-
-      // REMOVIDO: Não vincula mais o dono através do moradiaId
-      // Isso permite que o dono seja dono de múltiplas moradias
-      // e também possa ser morador em outras moradias
       
       console.log(`👤 Usuário ${donoId} definido como dono da moradia ${novaMoradia.id}`);
 
@@ -146,17 +142,7 @@ export class MoradiasService {
       );
     }
 
-    // Adiciona comodidades fora da transação (se necessário)
-    if (comodidades.length > 0 && comodidades[0].nome) {
-      await Promise.all(
-        comodidades.map((comodidade) =>
-          this.comodidadesMoradiaService.addComodidadeToMoradia(
-            resultado.id,
-            { nome: comodidade.nome, descricao: comodidade.descricao || '' }
-          )
-        )
-      );
-    }
+
 
     return resultado;
   }
