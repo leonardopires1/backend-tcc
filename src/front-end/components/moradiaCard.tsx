@@ -81,7 +81,7 @@ export default function MoradiaCard({
         
         <View style={styles.priceContainer}>
           <Text style={styles.price}>
-            R$ {moradia.preco?.toLocaleString('pt-BR') || '0'}/mês
+            R$ {moradia.valorMensalidade?.toLocaleString('pt-BR')}/mês
           </Text>
         </View>
       </View>

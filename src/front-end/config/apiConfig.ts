@@ -13,6 +13,8 @@ const API_CONFIG = {
       PROFILE: "/auth/profile",
       UPDATE: "/users/update",
       BY_CPF: (cpf: string) => `/users/cpf/${cpf}`,
+      UPLOAD_AVATAR: (id: number) => `/users/upload-avatar/${id}`,
+      GET_AVATAR: (id: number) => `/users/${id}/avatar`,
     },
     MORADIAS: {
       BASE: "/moradias",
@@ -20,6 +22,8 @@ const API_CONFIG = {
       BY_USER: "/moradias/user",
       BY_DONO: (donoId: number) => `/moradias/dono/${donoId}`,
       ADD_MEMBER: (moradiaId: number, usuarioId: number) => `/moradias/${moradiaId}/adicionar-membro/${usuarioId}`,
+      UPLOAD_IMAGE: (id: number) => `/moradias/image-upload/${id}`,
+      GET_IMAGE: (id: number) => `/moradias/${id}/image`,
     },
     COMODIDADES: {
       BASE: "/comodidades-moradia",

@@ -208,6 +208,7 @@ export class UsersService {
           genero: true,
           criadoEm: true,
           moradiaId: true,
+          avatarUrl: true, // Incluído campo do avatar
           moradiasDono: {
             select: {
               id: true,
@@ -253,11 +254,28 @@ export class UsersService {
   }
 
   async updateAvatar(userId: string, file: string) {
-    if (file) {
-      await this.prisma.usuario.update({
+    console.log('🔄 Atualizando avatar do usuário:', { userId, file });
+    
+    try {
+      if (!file) {
+        throw new Error('Nome do arquivo de avatar não fornecido');
+      }
+
+      const result = await this.prisma.usuario.update({
         where: { id: +userId },
         data: { avatarUrl: file },
+        select: {
+          id: true,
+          nome: true,
+          avatarUrl: true,
+        },
       });
+
+      console.log('✅ Avatar atualizado com sucesso:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Erro ao atualizar avatar no banco:', error);
+      throw error;
     }
   }
 

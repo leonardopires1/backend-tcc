@@ -61,6 +61,20 @@ class HttpService {
     };
   }
 
+  // Método público para obter headers com autenticação
+  async getAuthHeaders(): Promise<Record<string, string>> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    const token = await this.getAuthToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    return headers;
+  }
+
   private async getAuthToken(): Promise<string | null> {
     const { token } = await this.getTokenData();
     return token;
@@ -298,6 +312,117 @@ class HttpService {
 
   async patch<T>(endpoint: string, body?: any, requiresAuth = true, showErrorToUser = false): Promise<ApiResponse<T>> {
     return this.makeRequest<T>(endpoint, { method: 'PATCH', body, requiresAuth, showErrorToUser });
+  }
+
+  // Método específico para upload de arquivos
+  async uploadFile<T>(endpoint: string, formData: FormData, requiresAuth = true, showErrorToUser = false): Promise<ApiResponse<T>> {
+    const fallbackResponse: ApiResponse<T> = {
+      status: 0,
+      ok: false,
+      error: 'Erro de conectividade. Verifique sua conexão e tente novamente.',
+    };
+
+    const result = await safeExecute(async () => {
+      // Verificar se token precisa ser renovado
+      if (requiresAuth) {
+        const expired = await this.isTokenExpired();
+        if (expired) {
+          console.log('🔄 Token expirado, tentando renovar...');
+          const refreshed = await this.refreshAccessToken();
+          if (!refreshed) {
+            return {
+              status: 401,
+              ok: false,
+              error: 'Sessão expirada. Por favor, faça login novamente.',
+            };
+          }
+        }
+      }
+
+      const url = `${this.baseURL}${endpoint}`;
+      
+      const requestHeaders: Record<string, string> = {};
+
+      if (requiresAuth) {
+        const token = await this.getAuthToken();
+        if (token) {
+          requestHeaders.Authorization = `Bearer ${token}`;
+        }
+      }
+
+      const requestConfig: RequestInit = {
+        method: 'POST',
+        headers: requestHeaders,
+        body: formData,
+      };
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        console.log(`⏰ Upload timeout after ${this.timeout}ms for ${url}`);
+        controller.abort();
+      }, this.timeout);
+
+      try {
+        const response = await fetch(url, {
+          ...requestConfig,
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        let data: T | undefined;
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType?.includes('application/json')) {
+          data = await response.json();
+        }
+
+        const apiResponse: ApiResponse<T> = {
+          data,
+          status: response.status,
+          ok: response.ok,
+          error: !response.ok ? this.extractErrorMessage(data) : undefined,
+        };
+
+        // Se recebeu 401 (não autorizado), tentar renovar token
+        if (response.status === 401 && requiresAuth) {
+          console.log('🔄 Token inválido (401), tentando renovar...');
+          const refreshed = await this.refreshAccessToken();
+          
+          if (refreshed) {
+            // Tentar o upload novamente com o novo token
+            console.log('🔄 Reenviando upload com novo token...');
+            return this.uploadFile<T>(endpoint, formData, requiresAuth, showErrorToUser);
+          } else {
+            return {
+              status: 401,
+              ok: false,
+              error: 'Sessão expirada. Por favor, faça login novamente.',
+            };
+          }
+        }
+
+        // Se houve erro e deve mostrar ao usuário
+        if (!response.ok && showErrorToUser) {
+          showUserFriendlyError(this.extractErrorMessage(apiResponse.error));
+        }
+
+        return apiResponse;
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        
+        // Tratamento específico para AbortError
+        if (fetchError.name === 'AbortError') {
+          console.log(`🚫 Upload aborted for ${url}`);
+          throw new Error('Tempo limite do upload excedido. Tente novamente.');
+        }
+        
+        // Re-throw outros erros para serem tratados pelo safeExecute
+        throw fetchError;
+      }
+    }, fallbackResponse, showErrorToUser);
+
+    return result || fallbackResponse;
   }
 }
 

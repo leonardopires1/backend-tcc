@@ -8,10 +8,13 @@ import {
   ScrollView,
   Alert,
   Dimensions,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { useImages, ImageFile } from "../hooks/useImages";
+import UserAvatar from "../components/common/UserAvatar";
 
 const { width } = Dimensions.get('window');
 
@@ -64,7 +67,13 @@ const InfoCard: React.FC<InfoCardProps> = ({ title, value, icon, color }) => (
 );
 
 export const Profile = ({ navigation }: { navigation: any }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUserData } = useAuth();
+  const { 
+    isUploading, 
+    uploadProgress, 
+    uploadUserAvatar, 
+    showImagePickerOptions 
+  } = useImages();
 
   const handleLogout = () => {
     Alert.alert("Sair da conta", "Tem certeza que deseja sair?", [
@@ -111,8 +120,8 @@ export const Profile = ({ navigation }: { navigation: any }) => {
   const getStatusInfo = () => {
     if (user?.moradiaId) {
       return {
-        status: "Membro de República",
-        description: "Você faz parte de uma república",
+        status: "Membro de Moradia",
+        description: "Você faz parte de uma moradia",
         color: "#4CAF50",
         icon: "home" as keyof typeof Ionicons.glyphMap
       };
@@ -125,8 +134,8 @@ export const Profile = ({ navigation }: { navigation: any }) => {
       };
     } else {
       return {
-        status: "Sem República",
-        description: "Procure ou cadastre uma moradia",
+        status: "Sem Moradia",
+        description: "Procure ou cadastre uma moradia compartilhada",
         color: "#999",
         icon: "search" as keyof typeof Ionicons.glyphMap
       };
@@ -134,6 +143,34 @@ export const Profile = ({ navigation }: { navigation: any }) => {
   };
 
   const statusInfo = getStatusInfo();
+
+  // Função para alterar avatar do usuário
+  const handleChangeAvatar = () => {
+    if (!user?.id) return;
+    
+    showImagePickerOptions(async (image: ImageFile) => {
+      try {
+        const uploadResult = await uploadUserAvatar(
+          user.id, 
+          image,
+          // Callback para executar após sucesso
+          async () => {
+            console.log('🔄 Atualizando dados do usuário após upload do avatar...');
+            await refreshUserData();
+          }
+        );
+        
+        if (uploadResult.success) {
+          Alert.alert('Sucesso', 'Avatar atualizado com sucesso!');
+        } else {
+          Alert.alert('Erro', uploadResult.error || 'Erro ao fazer upload do avatar');
+        }
+      } catch (error) {
+        console.error('Erro no upload do avatar:', error);
+        Alert.alert('Erro', 'Erro ao fazer upload do avatar');
+      }
+    });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -156,11 +193,27 @@ export const Profile = ({ navigation }: { navigation: any }) => {
         {/* Profile Card */}
         <View style={styles.profileCard}>
           <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {user?.nome ? getInitials(user.nome) : "US"}
-              </Text>
-            </View>
+            <TouchableOpacity style={styles.avatarButton} onPress={handleChangeAvatar}>
+              <UserAvatar 
+                userId={user?.id || 0}
+                userName={user?.nome || ''}
+                hasAvatar={!!user?.avatarUrl}
+                style={styles.avatarImage}
+                fallbackStyle={styles.avatar}
+                showInitials={true}
+              />
+              <View style={styles.avatarOverlay}>
+                <Ionicons name="camera" size={16} color="#FFF" />
+              </View>
+            </TouchableOpacity>
+            {isUploading && (
+              <View style={styles.uploadProgressContainer}>
+                <Text style={styles.uploadProgressText}>Atualizando avatar...</Text>
+                <View style={styles.progressBar}>
+                  <View style={[styles.progressBarFill, { width: `${uploadProgress}%` }]} />
+                </View>
+              </View>
+            )}
           </View>
 
           <View style={styles.profileInfo}>
@@ -229,23 +282,23 @@ export const Profile = ({ navigation }: { navigation: any }) => {
             <ProfileOption
               icon="home-outline"
               title="Cadastrar Moradia"
-              subtitle="Crie uma nova república"
+              subtitle="Crie uma nova moradia"
               onPress={() => navigation.navigate("CadastrarMoradia")}
               color="#0073FF"
             />
             <ProfileOption
               icon="search-outline"
               title="Buscar Moradia"
-              subtitle="Encontre uma república"
+              subtitle="Encontre uma moradia"
               onPress={() => navigation.navigate("BuscarMoradia")}
               color="#4CAF50"
             />
             {user?.moradiaId && (
               <ProfileOption
                 icon="people-outline"
-                title="Minha República"
-                subtitle="Acesse o painel da sua república"
-                onPress={() => navigation.navigate("RepublicaDashboard")}
+                title="Minha Moradia"
+                subtitle="Acesse o painel da sua moradia"
+                onPress={() => navigation.navigate("MoradiaDashboard")}
                 color="#673AB7"
               />
             )}
@@ -354,6 +407,10 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     marginBottom: 16,
+    alignItems: 'center',
+  },
+  avatarButton: {
+    position: 'relative',
   },
   avatar: {
     width: 80,
@@ -367,6 +424,48 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 40,
+  },
+  avatarOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFF',
+  },
+  uploadProgressContainer: {
+    marginTop: 12,
+    width: 120,
+    alignItems: 'center',
+  },
+  uploadProgressText: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  progressBar: {
+    height: 3,
+    width: '100%',
+    backgroundColor: '#E0E0E0',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#0073FF',
+    borderRadius: 2,
   },
   avatarText: {
     fontSize: 28,

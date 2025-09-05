@@ -8,13 +8,16 @@ import {
   SafeAreaView,
   Alert,
   RefreshControl,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useTarefas } from '../hooks/useTarefas';
+import { useImages, ImageFile } from '../hooks/useImages';
 import { Loading } from '../components/common/Loading';
 import { ErrorMessage } from '../components/common/ErrorMessage';
 import AddMembroModal from '../components/AddMembroModal';
+import MoradiaImage from '../components/common/MoradiaImage';
 import { useMoradias } from '../hooks/useMoradias';
 import HttpService from '../services/httpService';
 import API_CONFIG from '../config/apiConfig';
@@ -50,6 +53,12 @@ interface Conta {
 export default function MoradiaDashboard({ navigation }: { navigation: any }) {
   const { user, refreshUserData } = useAuth();
   const { tarefas, loading: tarefasLoading, error: tarefasError, refreshTarefas } = useTarefas();
+  const { 
+    isUploading, 
+    uploadProgress, 
+    uploadMoradiaImage, 
+    showImagePickerOptions 
+  } = useImages();
 
   const [moradiaData, setMoradiaData] = useState<MoradiaDetalhada | null>(null);
   const [contas, setContas] = useState<Conta[]>([]);
@@ -104,6 +113,13 @@ export default function MoradiaDashboard({ navigation }: { navigation: any }) {
       );
 
       if (moradiaResponse.ok && moradiaResponse.data) {
+        console.log('📱 Dados da moradia recebidos:', {
+          id: moradiaResponse.data.id,
+          nome: moradiaResponse.data.nome,
+          imagemUrl: moradiaResponse.data.imagemUrl,
+          hasImage: !!moradiaResponse.data.imagemUrl
+        });
+        
         // Se os moradores não vieram com os dados detalhados, buscar separadamente
         let moradiaCompleta = moradiaResponse.data;
         
@@ -125,7 +141,13 @@ export default function MoradiaDashboard({ navigation }: { navigation: any }) {
         }
         
         setMoradiaData(moradiaCompleta);
-        console.log('✅ Dados da moradia carregados:', moradiaCompleta.nome);
+        console.log('✅ Dados da moradia carregados:', {
+          nome: moradiaCompleta.nome,
+          imagemUrl: moradiaCompleta.imagemUrl,
+          hasImage: !!moradiaCompleta.imagemUrl,
+          imagemUrlType: typeof moradiaCompleta.imagemUrl,
+          fullData: moradiaCompleta
+        });
       } else {
         throw new Error(moradiaResponse.error || 'Erro ao carregar dados da moradia');
       }
@@ -268,6 +290,28 @@ export default function MoradiaDashboard({ navigation }: { navigation: any }) {
     }
   };
 
+  // Função para alterar foto da moradia
+  const handleChangeImage = () => {
+    if (!moradiaData?.id) return;
+    
+    showImagePickerOptions(async (image: ImageFile) => {
+      try {
+        const uploadResult = await uploadMoradiaImage(moradiaData.id, image);
+        
+        if (uploadResult.success) {
+          Alert.alert('Sucesso', 'Foto da moradia atualizada com sucesso!');
+          // Recarregar dados da moradia para mostrar a nova imagem
+          await loadMoradiaData();
+        } else {
+          Alert.alert('Erro', uploadResult.error || 'Erro ao fazer upload da imagem');
+        }
+      } catch (error) {
+        console.error('Erro no upload da imagem:', error);
+        Alert.alert('Erro', 'Erro ao fazer upload da imagem');
+      }
+    });
+  };
+
   if (loading || tarefasLoading) {
     return <Loading />;
   }
@@ -335,8 +379,17 @@ export default function MoradiaDashboard({ navigation }: { navigation: any }) {
         {/* Info da República */}
         <View style={styles.moradiaCard}>
           <View style={styles.moradiaHeader}>
-            <View style={styles.moradiaIconContainer}>
-              <Ionicons name="home" size={32} color="#0073FF" />
+            <View style={styles.moradiaImageContainer}>
+              <TouchableOpacity onPress={handleChangeImage} style={styles.imageButton}>
+                <MoradiaImage 
+                  moradiaId={moradiaData.id}
+                  hasImage={!!moradiaData.imagemUrl}
+                  style={styles.moradiaImage}
+                />
+                <View style={styles.imageOverlay}>
+                  <Ionicons name="camera" size={20} color="#FFF" />
+                </View>
+              </TouchableOpacity>
             </View>
             <View style={styles.moradiaInfo}>
               <Text style={styles.moradiaNome}>{moradiaData.nome}</Text>
@@ -344,6 +397,14 @@ export default function MoradiaDashboard({ navigation }: { navigation: any }) {
               <Text style={styles.moradiaValor}>
                 Mensalidade: {formatCurrency(moradiaData.valorMensalidade)}
               </Text>
+              {isUploading && (
+                <View style={styles.uploadProgressContainer}>
+                  <Text style={styles.uploadProgressText}>Atualizando foto...</Text>
+                  <View style={styles.progressBar}>
+                    <View style={[styles.progressBarFill, { width: `${uploadProgress}%` }]} />
+                  </View>
+                </View>
+              )}
             </View>
           </View>
         </View>
@@ -581,6 +642,72 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
+    position: 'relative',
+  },
+  moradiaImageContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 16,
+    position: 'relative',
+  },
+  imageButton: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 30,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  moradiaImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 30,
+  },
+  imageOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addPhotoIcon: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    backgroundColor: '#FFF',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  uploadProgressContainer: {
+    marginTop: 8,
+  },
+  uploadProgressText: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+  },
+  progressBar: {
+    height: 3,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#0073FF',
+    borderRadius: 2,
   },
   moradiaInfo: {
     flex: 1,

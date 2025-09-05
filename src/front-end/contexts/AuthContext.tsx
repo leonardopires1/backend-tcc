@@ -12,6 +12,7 @@ interface User {
   telefone: string;
   genero: string;
   moradiaId?: number;
+  avatarUrl?: string; // Campo para armazenar o nome do arquivo do avatar
   moradiasDono?: {
     id: number;
     nome: string;
@@ -43,6 +44,7 @@ interface AuthContextType extends AuthState {
   updateProfile: (userData: Partial<User>) => Promise<{ success: boolean; message?: string }>;
   refreshAccessToken: () => Promise<boolean>;
   refreshUserData: () => Promise<void>;
+  register: (formData: FormCadastro) => Promise<{ success: boolean; message?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -422,6 +424,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     updateProfile,
     refreshAccessToken,
     refreshUserData,
+    register,
   };
 
   return (

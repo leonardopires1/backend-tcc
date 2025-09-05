@@ -14,12 +14,15 @@ import {
   Platform,
   KeyboardAvoidingView,
   ActivityIndicator,
+  Image,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../constants';
 import { useAuth } from '../contexts/AuthContext';
 import { useMoradias } from '../hooks/useMoradias';
 import { useRegras } from '../hooks/useRegras';
+import { useImages, ImageFile } from '../hooks/useImages';
 import SelectRegrasModal from '../components/SelectRegrasModal';
 
 export default function CadastrarMoradia({ navigation }: { navigation: any }) {
@@ -30,9 +33,17 @@ export default function CadastrarMoradia({ navigation }: { navigation: any }) {
   const [regrasModalVisible, setRegrasModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ nome?: string; cep?: string; mensalidade?: string }>({});
+  const [selectedImage, setSelectedImage] = useState<ImageFile | null>(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   const { user, refreshUserData } = useAuth();
   const { createMoradia } = useMoradias();
   const { regras, loading: loadingRegras } = useRegras();
+  const { 
+    isUploading, 
+    uploadProgress, 
+    uploadMoradiaImage, 
+    showImagePickerOptions 
+  } = useImages();
 
   // Função para formatar CEP automaticamente
   const formatCEP = (text: string) => {
@@ -80,6 +91,19 @@ export default function CadastrarMoradia({ navigation }: { navigation: any }) {
     );
   };
 
+  // Função para selecionar imagem
+  const handleSelectImage = () => {
+    showImagePickerOptions((image: ImageFile) => {
+      setSelectedImage(image);
+    });
+  };
+
+  // Função para remover imagem selecionada
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setUploadedImageUrl(null);
+  };
+
   const handleCriarMoradia = async () => {
     if (isLoading) return;
     Keyboard.dismiss();
@@ -123,8 +147,37 @@ export default function CadastrarMoradia({ navigation }: { navigation: any }) {
         donoId: userId,
         regras: { id: selectedRegrasIds },
       } as any);
+      
       if (res.success) {
-        alert('Moradia cadastrada com sucesso!');
+        let finalImageUrl = uploadedImageUrl;
+        
+        // Se há uma imagem selecionada e ainda não foi feito upload
+        if (selectedImage && !uploadedImageUrl && res.data?.id) {
+          try {
+            const uploadResult = await uploadMoradiaImage(res.data.id, selectedImage);
+            if (uploadResult.success) {
+              finalImageUrl = uploadResult.imageUrl || null;
+            } else {
+              // Upload falhou, mas moradia foi criada - mostrar warning
+              Alert.alert(
+                'Moradia Criada',
+                'Moradia criada com sucesso, mas houve erro no upload da imagem. Você pode adicionar a imagem depois.',
+                [{ text: 'OK' }]
+              );
+            }
+          } catch (error) {
+            console.error('Erro no upload da imagem:', error);
+            Alert.alert(
+              'Moradia Criada',
+              'Moradia criada com sucesso, mas houve erro no upload da imagem. Você pode adicionar a imagem depois.',
+              [{ text: 'OK' }]
+            );
+          }
+        }
+        
+        if (!selectedImage || finalImageUrl) {
+          alert('Moradia cadastrada com sucesso!');
+        }
         
         // Atualizar o contexto de autenticação para refletir que o usuário agora faz parte de uma moradia
         await refreshUserData();
@@ -133,6 +186,8 @@ export default function CadastrarMoradia({ navigation }: { navigation: any }) {
         setCep('');
         setMensalidade('');
         setSelectedRegrasIds([]);
+        setSelectedImage(null);
+        setUploadedImageUrl(null);
         navigation.navigate('Home');
       } else {
         const errorData = await res.message;
@@ -208,6 +263,44 @@ export default function CadastrarMoradia({ navigation }: { navigation: any }) {
                 onSubmitEditing={() => Keyboard.dismiss()}
               />
               {errors.mensalidade && <Text style={styles.errorText}>{errors.mensalidade}</Text>}
+            </View>
+
+            {/* Seção de Foto da Moradia */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Foto da Moradia (Opcional)</Text>
+              
+              {selectedImage ? (
+                <View style={styles.imageContainer}>
+                  <Image source={{ uri: selectedImage.uri }} style={styles.selectedImage} />
+                  <TouchableOpacity 
+                    style={styles.removeImageButton}
+                    onPress={handleRemoveImage}
+                    disabled={isLoading || isUploading}
+                  >
+                    <Ionicons name="close-circle" size={24} color={COLORS.ERROR} />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={styles.imagePickerButton}
+                  onPress={handleSelectImage}
+                  disabled={isLoading || isUploading}
+                >
+                  <Ionicons name="camera-outline" size={32} color={COLORS.PRIMARY} />
+                  <Text style={styles.imagePickerText}>Adicionar foto da moradia</Text>
+                  <Text style={styles.imagePickerSubtext}>Toque para selecionar uma imagem</Text>
+                </TouchableOpacity>
+              )}
+              
+              {isUploading && (
+                <View style={styles.uploadProgressContainer}>
+                  <Text style={styles.uploadProgressText}>Fazendo upload da imagem...</Text>
+                  <View style={styles.progressBar}>
+                    <View style={[styles.progressBarFill, { width: `${uploadProgress}%` }]} />
+                  </View>
+                  <Text style={styles.uploadProgressPercentage}>{uploadProgress}%</Text>
+                </View>
+              )}
             </View>
 
             {/* Seção de Regras */}
@@ -415,5 +508,79 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.ERROR,
     fontWeight: 'bold',
+  },
+  // Estilos para upload de imagem
+  imageContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    marginTop: SPACING.SM,
+  },
+  selectedImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: BORDER_RADIUS.MD,
+    resizeMode: 'cover',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: COLORS.WHITE,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  imagePickerButton: {
+    backgroundColor: COLORS.GRAY_LIGHT,
+    borderRadius: BORDER_RADIUS.LG,
+    padding: SPACING.XL,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.PRIMARY,
+    borderStyle: 'dashed',
+    minHeight: 120,
+  },
+  imagePickerText: {
+    fontSize: FONT_SIZES.MD,
+    fontWeight: '600',
+    color: COLORS.PRIMARY,
+    marginTop: SPACING.SM,
+  },
+  imagePickerSubtext: {
+    fontSize: FONT_SIZES.SM,
+    color: COLORS.TEXT_SECONDARY,
+    marginTop: SPACING.XS,
+    textAlign: 'center',
+  },
+  uploadProgressContainer: {
+    marginTop: SPACING.MD,
+    paddingHorizontal: SPACING.SM,
+  },
+  uploadProgressText: {
+    fontSize: FONT_SIZES.SM,
+    color: COLORS.TEXT_PRIMARY,
+    marginBottom: SPACING.XS,
+    textAlign: 'center',
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: COLORS.GRAY_LIGHT,
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginBottom: SPACING.XS,
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: COLORS.PRIMARY,
+    borderRadius: 2,
+  },
+  uploadProgressPercentage: {
+    fontSize: FONT_SIZES.XS,
+    color: COLORS.TEXT_SECONDARY,
+    textAlign: 'center',
   },
 });

@@ -87,14 +87,14 @@ export class MoradiasService {
               tipo: despesa.tipo,
             })),
           },
-          regrasMoradia: {
-            connect: regras.id.map((id) => ({ id })),
-          },
+
           comodidades: {
-            create: comodidades.map((comodidade) => ({
-              nome: comodidade.nome,
-              descricao: comodidade.descricao,
-            })),
+            create: comodidades
+              .filter((comodidade) => comodidade.nome && comodidade.nome.trim())
+              .map((comodidade) => ({
+                nome: comodidade.nome,
+                descricao: comodidade.descricao,
+              })),
           },
           // REMOVIDO: Dono não é mais automaticamente adicionado como morador
           // Ele pode ser adicionado separadamente se necessário
@@ -102,10 +102,6 @@ export class MoradiasService {
       });
 
       console.log(`🏠 Moradia criada: ${novaMoradia.id} - Dono: ${donoId}`);
-
-      // REMOVIDO: Não vincula mais o dono através do moradiaId
-      // Isso permite que o dono seja dono de múltiplas moradias
-      // e também possa ser morador em outras moradias
       
       console.log(`👤 Usuário ${donoId} definido como dono da moradia ${novaMoradia.id}`);
 
@@ -146,17 +142,7 @@ export class MoradiasService {
       );
     }
 
-    // Adiciona comodidades fora da transação (se necessário)
-    if (comodidades.length > 0 && comodidades[0].nome) {
-      await Promise.all(
-        comodidades.map((comodidade) =>
-          this.comodidadesMoradiaService.addComodidadeToMoradia(
-            resultado.id,
-            { nome: comodidade.nome, descricao: comodidade.descricao || '' }
-          )
-        )
-      );
-    }
+
 
     return resultado;
   }
@@ -208,6 +194,72 @@ export class MoradiasService {
     return moradias;
   }
 
+  async findByUser(userId: number) {
+    // Buscar moradia onde o usuário é morador OU dono
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: userId },
+      include: {
+        moradia: {
+          select: {
+            id: true,
+            nome: true,
+            descricao: true,
+            endereco: true,
+            valorMensalidade: true,
+            imagemUrl: true,
+            dono: { select: { id: true, nome: true, email: true } },
+            moradores: {
+              select: { 
+                id: true, 
+                nome: true, 
+                email: true, 
+                telefone: true, 
+                genero: true 
+              }
+            }
+          }
+        },
+        moradiasDono: {
+          select: {
+            id: true,
+            nome: true,
+            descricao: true,
+            endereco: true,
+            valorMensalidade: true,
+            imagemUrl: true,
+            dono: { select: { id: true, nome: true, email: true } },
+            moradores: {
+              select: { 
+                id: true, 
+                nome: true, 
+                email: true, 
+                telefone: true, 
+                genero: true 
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    // Se é morador de uma moradia, retornar essa moradia
+    if (usuario.moradia) {
+      return [usuario.moradia];
+    }
+
+    // Se é dono de moradias, retornar a primeira (ou todas se necessário)
+    if (usuario.moradiasDono && usuario.moradiasDono.length > 0) {
+      return usuario.moradiasDono;
+    }
+
+    // Usuário não tem moradia
+    return [];
+  }
+
   async findOne(id: number) {
     const moradia = await this.prisma.moradia.findUnique({
       where: { id },
@@ -245,12 +297,13 @@ export class MoradiasService {
   }
 
   async update(id: number, updateMoradiaDto: UpdateMoradiaDto) {
-    const { nome, endereco, donoId, valorMensalidade } = updateMoradiaDto;
+    const { nome, endereco, donoId, valorMensalidade, imagemUrl } = updateMoradiaDto;
 
     const data: any = {
       ...(nome && { nome }),
       ...(endereco && { endereco }),
       ...(valorMensalidade && { valorMensalidade }),
+      ...(imagemUrl !== undefined && { imagemUrl }), // Permite atualizar imagemUrl mesmo que seja null
       ...(donoId && { dono: { connect: { id: donoId } } }),
     };
 

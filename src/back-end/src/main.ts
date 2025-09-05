@@ -4,11 +4,18 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe, BadRequestException } from '@nestjs/common';
 import helmet from 'helmet';
 import * as compression from 'compression';
+import { join } from 'path';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import AllExceptionsFilter from './common/filters/all-exceptions.filter';
 import LoggingInterceptor from './common/interceptors/logging.interceptor';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Configurar arquivos estáticos para servir imagens
+  app.useStaticAssets(join(__dirname, '..', 'images'), {
+    prefix: '/images/',
+  });
 
   // Segurança
   app.use(helmet());

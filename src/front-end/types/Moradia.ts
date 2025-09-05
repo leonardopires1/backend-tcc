@@ -19,7 +19,6 @@ export default interface Moradia {
     regras?: string[];
     comodidades?: string[];
     // Campos adicionais para melhor experiência
-    preco?: number; // Mantido para compatibilidade com versões anteriores
     vagasDisponiveis?: number;
     totalVagas?: number;
     imagens?: string[];
