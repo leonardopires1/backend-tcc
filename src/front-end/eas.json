@@ -1,0 +1,25 @@
+{
+  "cli": {
+    "version": ">= 3.17.1"
+  },
+  "build": {
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_BASE_URL": "http://eq3.ini3b.projetoscti.com.br/api"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "distribution": "store",
+      "env": {
+        "EXPO_PUBLIC_BASE_URL": "http://eq3.ini3b.projetoscti.com.br/api"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      }
+    }
+  }
+}

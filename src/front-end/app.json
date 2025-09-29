@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "front-end-tcc",
-    "slug": "front-end-tcc",
+    "name": "RoomMate",
+    "slug": "RoomMate-seu-app-de-gerenciamento-de-moradia",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "icon": "./assets/svgs/icon.svg",
+    "icon": "./assets/icon.png",
     "splash": {
-      "image": "./assets/svgs/icon.svg",
+      "image": "./assets/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -19,7 +19,13 @@
       "supportsTablet": true
     },
     "android": {
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.leonardopires.RoomMateseuappdegerenciamentodemoradia"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "1a5ddb13-2ec5-4e88-ab5e-38f9511c1f56"
+      }
     }
   }
 }
