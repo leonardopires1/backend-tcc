@@ -17,6 +17,11 @@ export class TarefasUsuarioController {
     return this.tarefasUsuarioService.findAll();
   }
 
+  @Get('moradia/:moradiaId')
+  findByMoradia(@Param('moradiaId') moradiaId: string) {
+    return this.tarefasUsuarioService.findByMoradia(+moradiaId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.tarefasUsuarioService.findOne(+id);
