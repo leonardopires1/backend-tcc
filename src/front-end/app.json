@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "RoomMate",
+    "name": "roommate",
     "slug": "RoomMate-seu-app-de-gerenciamento-de-moradia",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -26,6 +26,7 @@
       "eas": {
         "projectId": "1a5ddb13-2ec5-4e88-ab5e-38f9511c1f56"
       }
-    }
+    },
+    "owner": "leonardopires"
   }
 }
