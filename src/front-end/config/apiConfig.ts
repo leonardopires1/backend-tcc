@@ -44,6 +44,12 @@ const API_CONFIG = {
       BASE: "/despesas",
       BY_MORADIA: (id: number) => `/despesas/moradia/${id}`,
       DELETE: (id: number) => `/despesas/${id}`,
+    },
+    TAREFAS: {
+      BASE: "/tarefas-usuario",
+      BY_ID: (id: number) => `/tarefas-usuario/${id}`,
+      BY_MORADIA: (moradiaId: number) => `/tarefas-usuario/moradia/${moradiaId}`,
+      ATRIBUIR: (userId: number) => `/tarefas-usuario/${userId}/atribuir`,
     }
   },
 

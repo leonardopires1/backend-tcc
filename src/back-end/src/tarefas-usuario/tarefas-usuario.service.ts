@@ -19,7 +19,42 @@ export class TarefasUsuarioService {
   }
 
   findAll() {
-    return this.prisma.tarefa.findMany();
+    return this.prisma.tarefa.findMany({
+      include: {
+        atribuicoes: {
+          include: {
+            usuario: {
+              select: {
+                id: true,
+                nome: true,
+                email: true
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  findByMoradia(moradiaId: number) {
+    return this.prisma.tarefa.findMany({
+      where: {
+        moradiaId: moradiaId
+      },
+      include: {
+        atribuicoes: {
+          include: {
+            usuario: {
+              select: {
+                id: true,
+                nome: true,
+                email: true
+              }
+            }
+          }
+        }
+      }
+    });
   }
 
   findOne(id: number) {

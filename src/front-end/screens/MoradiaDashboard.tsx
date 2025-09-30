@@ -52,7 +52,6 @@ interface Conta {
 
 export default function MoradiaDashboard({ navigation }: { navigation: any }) {
   const { user, refreshUserData } = useAuth();
-  const { tarefas, loading: tarefasLoading, error: tarefasError, refreshTarefas } = useTarefas();
   const { 
     isUploading, 
     uploadProgress, 
@@ -66,6 +65,9 @@ export default function MoradiaDashboard({ navigation }: { navigation: any }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddMembroModal, setShowAddMembroModal] = useState(false);
+
+  // Hook de tarefas com moradiaId
+  const { tarefas, loading: tarefasLoading, error: tarefasError, refreshTarefas } = useTarefas(moradiaData?.id);
 
   useEffect(() => {
     console.log('🏠 MoradiaDashboard montado, usuário:', { 
@@ -474,30 +476,72 @@ export default function MoradiaDashboard({ navigation }: { navigation: any }) {
               <Text style={styles.verTodos}>Ver todas</Text>
             </TouchableOpacity>
           </View>
-          {tarefasPendentes.slice(0, 3).map((tarefa) => (
-            <View key={tarefa.id} style={styles.tarefaCard}>
-              <TouchableOpacity
-                style={styles.tarefaCheckbox}
-                onPress={() => handleMarcarTarefaConcluida(tarefa.id)}
-              >
-                <Ionicons name="checkmark" size={16} color="#FFF" />
-              </TouchableOpacity>
-              <View style={styles.tarefaInfo}>
-                <Text style={styles.tarefaTitulo}>{tarefa.nome}</Text>
-                <Text style={styles.tarefaResponsavel}>
-                  {tarefa.atribuicoes && tarefa.atribuicoes.length > 0 
-                    ? `Responsável: Usuário ${tarefa.atribuicoes[0].usuarioId}`
-                    : 'Sem responsável'
-                  }
-                </Text>
-              </View>
-              <View style={styles.tarefaPrazo}>
-                <Text style={styles.tarefaPrazoTexto}>
-                  {new Date(tarefa.criadoEm).toLocaleDateString()}
-                </Text>
-              </View>
+          {tarefasPendentes.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="clipboard-outline" size={48} color="#CCC" />
+              <Text style={styles.emptyStateText}>Nenhuma tarefa encontrada</Text>
+              <Text style={styles.emptyStateSubtext}>Crie uma nova tarefa para começar</Text>
             </View>
-          ))}
+          ) : (
+            tarefasPendentes.slice(0, 3).map((tarefa) => {
+              const atribuicaoAtiva = tarefa.atribuicoes?.find(a => !a.concluida);
+              const responsavel = atribuicaoAtiva?.usuario;
+              
+              return (
+                <View key={tarefa.id} style={styles.tarefaCard}>
+                  <TouchableOpacity
+                    style={styles.tarefaCheckbox}
+                    onPress={() => handleMarcarTarefaConcluida(tarefa.id)}
+                  >
+                    <Ionicons name="checkmark" size={16} color="#FFF" />
+                  </TouchableOpacity>
+                  
+                  <View style={styles.tarefaContent}>
+                    <View style={styles.tarefaHeader}>
+                      <Text style={styles.tarefaTitulo}>{tarefa.nome}</Text>
+                      <Text style={styles.tarefaData}>
+                        {new Date(tarefa.criadoEm).toLocaleDateString('pt-BR')}
+                      </Text>
+                    </View>
+                    
+                    {tarefa.descricao && (
+                      <Text style={styles.tarefaDescricao} numberOfLines={2}>
+                        {tarefa.descricao}
+                      </Text>
+                    )}
+                    
+                    <View style={styles.tarefaFooter}>
+                      {responsavel ? (
+                        <View style={styles.responsavelContainer}>
+                          <View style={styles.responsavelAvatar}>
+                            <Text style={styles.responsavelInicial}>
+                              {responsavel.nome.charAt(0).toUpperCase()}
+                            </Text>
+                          </View>
+                          <Text style={styles.responsavelNome}>
+                            {responsavel.nome}
+                          </Text>
+                        </View>
+                      ) : (
+                        <View style={styles.semResponsavelContainer}>
+                          <Ionicons name="person-outline" size={16} color="#999" />
+                          <Text style={styles.semResponsavelTexto}>Sem responsável</Text>
+                        </View>
+                      )}
+                      
+                      <View style={styles.statusContainer}>
+                        <View style={[styles.statusBadge, styles.statusPendente]}>
+                          <Text style={[styles.statusText, styles.statusTextPendente]}>
+                            Pendente
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              );
+            })
+          )}
         </View>
 
         {/* Membros */}
@@ -852,7 +896,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -867,27 +911,101 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+    marginTop: 2,
   },
-  tarefaInfo: {
+  tarefaContent: {
     flex: 1,
+  },
+  tarefaHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
   },
   tarefaTitulo: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
-    marginBottom: 4,
+    flex: 1,
+    marginRight: 8,
   },
-  tarefaResponsavel: {
+  tarefaData: {
+    fontSize: 12,
+    color: '#999',
+    fontWeight: '500',
+  },
+  tarefaDescricao: {
     fontSize: 14,
     color: '#666',
+    marginBottom: 12,
+    lineHeight: 20,
   },
-  tarefaPrazo: {
+  tarefaFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  responsavelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  responsavelAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#0073FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  responsavelInicial: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#FFF',
+  },
+  responsavelNome: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+    flex: 1,
+  },
+  semResponsavelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  semResponsavelTexto: {
+    fontSize: 14,
+    color: '#999',
+    marginLeft: 6,
+    fontStyle: 'italic',
+  },
+  statusContainer: {
     alignItems: 'flex-end',
   },
-  tarefaPrazoTexto: {
+  emptyState: {
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    padding: 40,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  emptyStateSubtext: {
     fontSize: 14,
-    color: '#FF9800',
-    fontWeight: '500',
+    color: '#999',
+    marginTop: 8,
+    textAlign: 'center',
   },
   membrosGrid: {
     flexDirection: 'row',

@@ -11,11 +11,17 @@ export const useTarefas = (moradiaId?: number) => {
     setLoading(true);
     setError(null);
     try {
-      const allTarefas = await tarefaService.getAllTarefas();
-      // Filtrar por moradia se o ID for fornecido
-      const filteredTarefas = moradiaId 
-        ? allTarefas.filter(tarefa => tarefa.moradiaId === moradiaId)
-        : allTarefas;
+      let filteredTarefas: Tarefa[];
+      
+      if (moradiaId) {
+        // Se temos moradiaId, buscar tarefas específicas da moradia
+        filteredTarefas = await tarefaService.getTarefasByMoradia(moradiaId);
+      } else {
+        // Senão, buscar todas e filtrar (comportamento original)
+        const allTarefas = await tarefaService.getAllTarefas();
+        filteredTarefas = allTarefas;
+      }
+      
       setTarefas(filteredTarefas);
     } catch (err) {
       setError('Erro ao carregar tarefas');

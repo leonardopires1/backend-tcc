@@ -13,6 +13,11 @@ export interface AtribuicaoTarefa {
   tarefaId: number;
   usuarioId: number;
   tarefa?: Tarefa;
+  usuario?: {
+    id: number;
+    nome: string;
+    email: string;
+  };
 }
 
 export interface CreateTarefaDto {
