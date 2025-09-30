@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
   profileCard: {
     backgroundColor: '#FFF',
     marginHorizontal: 20,
-    marginTop: -10,
+    marginTop: 10,
     borderRadius: 16,
     paddingVertical: 24,
     paddingHorizontal: 20,

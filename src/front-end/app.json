@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "roommate",
-    "slug": "RoomMate-seu-app-de-gerenciamento-de-moradia",
+    "slug": "roommate",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",

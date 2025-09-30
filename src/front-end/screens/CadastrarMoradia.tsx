@@ -207,20 +207,23 @@ export default function CadastrarMoradia({ navigation }: { navigation: any }) {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
+        {/* Header fixo */}
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.unifiedBackBtn} onPress={() => navigation.goBack()}>
+            <Ionicons name="chevron-back" size={20} color={COLORS.PRIMARY} />
+            <Text style={styles.unifiedBackText}>Voltar</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Cadastrar Moradia</Text>
+          <View style={styles.headerSpacer} />
+        </View>
+        
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.backWrapper}>
-            <TouchableOpacity style={styles.unifiedBackBtn} onPress={() => navigation.goBack()}>
-              <Ionicons name="chevron-back" size={20} color={COLORS.PRIMARY} />
-              <Text style={styles.unifiedBackText}>Voltar</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.content}> 
-            <Text style={styles.title}>Cadastrar Moradia</Text>
+          <View style={styles.content}>
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Nome da moradia</Text>
               <TextInput
@@ -380,13 +383,16 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: SPACING.MD,
     paddingBottom: SPACING.XL,
-    justifyContent: 'center',
+    paddingTop: SPACING.MD,
   },
-  backWrapper: {
-    position: 'absolute',
-    top: SPACING.LG,
-    left: SPACING.MD,
-    zIndex: 10,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.MD,
+    paddingVertical: SPACING.MD,
+    backgroundColor: COLORS.WHITE,
+    minHeight: 60,
   },
   unifiedBackBtn: {
     flexDirection: 'row',
@@ -396,26 +402,31 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#dbeafe'
+    borderColor: '#dbeafe',
+    flex: 0,
   },
   unifiedBackText: {
     color: COLORS.PRIMARY,
     fontWeight: '600',
     marginLeft: 4,
-    fontSize: 14
+    fontSize: 14,
+  },
+  headerTitle: {
+    fontSize: FONT_SIZES.XL,
+    fontWeight: 'bold',
+    color: COLORS.TEXT_PRIMARY,
+    textAlign: 'center',
+    flex: 1,
+  },
+  headerSpacer: {
+    width: 70, // Aproximadamente a largura do botão voltar para centralizar o título
+    flex: 0,
   },
   content: {
     width: '100%',
     maxWidth: 420,
     alignSelf: 'center',
     backgroundColor: COLORS.WHITE,
-  },
-  title: {
-    fontSize: FONT_SIZES.XXL,
-    fontWeight: 'bold',
-    color: COLORS.TEXT_PRIMARY,
-    textAlign: 'center',
-    marginBottom: SPACING.XL,
   },
   inputContainer: {
     marginBottom: SPACING.LG,
