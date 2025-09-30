@@ -16,11 +16,18 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "icon": "./assets/icon.png"
     },
     "android": {
       "edgeToEdgeEnabled": true,
-      "package": "com.leonardopires.RoomMateseuappdegerenciamentodemoradia"
+      "package": "com.leonardopires.RoomMateseuappdegerenciamentodemoradia",
+      "icon": "./assets/icon.png",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#ffffff",
+        "monochromeImage": "./assets/icon.png"
+      }
     },
     "extra": {
       "eas": {
