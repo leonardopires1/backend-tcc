@@ -1,6 +1,8 @@
 name: Release
 
-on: push
+on: 
+  push:
+    branches: [ main ]  # Especificar branch para evitar deploys desnecessários
 
 jobs:
   web-deploy:
@@ -8,7 +10,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Get latest code
-      uses: actions/checkout@v4    
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'  # ou a versão que você usa
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build project
+      run: npm run build
+      
     - name: Sync files
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
@@ -16,4 +31,5 @@ jobs:
         username: eq3ini3b
         password: ${{ secrets.ftp_password }}
         server-dir: ./api/
+        local-dir: ./dist/  # Apenas os arquivos buildados
         port: 4026
