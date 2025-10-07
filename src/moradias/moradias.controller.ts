@@ -166,6 +166,7 @@ export class MoradiasController {
 
   // Novo endpoint para servir a imagem diretamente
   @Public()
+  @Public()
   @Get(':id/image')
   async getMoradiaImage(@Param('id') id: string, @Res({ passthrough: true }) res: Response) {
     try {
