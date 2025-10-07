@@ -7,6 +7,7 @@ import { diskStorage } from 'multer';
 import { Response } from 'express';
 import { createReadStream, existsSync } from 'fs';
 import { join } from 'path';
+import { Public } from 'src/common/decorators/user.decorator';
 
 @Controller('moradias')
 export class MoradiasController {
@@ -107,6 +108,7 @@ export class MoradiasController {
     }
   }
 
+  @Public()
   @Post('/image-upload/:id')
   @UseInterceptors(FileInterceptor('file', {
     storage: diskStorage({
