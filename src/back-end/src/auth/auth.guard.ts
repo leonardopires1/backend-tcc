@@ -75,7 +75,24 @@ export class AuthGuard implements CanActivate {
   }
 
   private extractTokenFromHeader(request: Request): string | undefined {
-    const [type, token] = request.headers.authorization?.split(' ') ?? [];
-    return type === 'Bearer' ? token : undefined;
+    // First try the Authorization header as usual
+    const authHeader = request.headers.authorization;
+    if (authHeader) {
+      const [type, token] = authHeader.split(' ');
+      return type === 'Bearer' ? token : undefined;
+    }
+
+    // Fallback: allow token via query parameter (useful for image tags or clients that can't set headers)
+    // Accept either `token` or `access_token` as query parameter names
+    // Note: This keeps the endpoint protected, but allows the client to pass the JWT in the URL when needed.
+    const anyReq = request as any;
+    const qp = anyReq.query?.token || anyReq.query?.access_token;
+    if (qp && typeof qp === 'string') return qp;
+
+    // Optional: check cookies if present
+    const cookieToken = anyReq.cookies?.token || anyReq.cookies?.access_token;
+    if (cookieToken && typeof cookieToken === 'string') return cookieToken;
+
+    return undefined;
   }
 }
