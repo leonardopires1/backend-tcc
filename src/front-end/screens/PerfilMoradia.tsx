@@ -11,11 +11,13 @@ import {
 import Moradia from "../types/Moradia";
 import { Ionicons } from "@expo/vector-icons";
 import { useMoradias } from "../hooks/useMoradias";
+import MoradiaImage from "../components/common/MoradiaImage";
 import { useComodidades } from "../hooks/useComodidades";
 import { useAuth } from "../contexts/AuthContext";
 import AddComodidadeModal from "../components/AddComodidadeModal";
 import SelectRegrasModal from "../components/SelectRegrasModal";
 import { useRegras } from "../hooks/useRegras";
+import API_CONFIG from "../config/apiConfig";
 
 export default function PerfilMoradia({
   route,
@@ -39,7 +41,8 @@ export default function PerfilMoradia({
   const [modalVisible, setModalVisible] = useState(false); // modal antigo (comodidade/regra manual)
   const [modalRegrasVisible, setModalRegrasVisible] = useState(false); // seleção de regras pré-definidas
   const [updating, setUpdating] = useState(false);
-  const { comodidades, addComodidade, removeComodidade } = useComodidades(moradiaId);
+  const { comodidades, addComodidade, removeComodidade } =
+    useComodidades(moradiaId);
   const {
     regras,
     regrasVinculadas,
@@ -130,17 +133,15 @@ export default function PerfilMoradia({
   if (!moradia && !moradiaId) {
     console.error("Nem moradia nem ID fornecidos");
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Moradia não encontrada</Text>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.navigate("BuscarMoradia")}
-          >
-            <Text style={styles.backButtonText}>Voltar</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Moradia não encontrada</Text>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.navigate("BuscarMoradia")}
+        >
+          <Text style={styles.backButtonText}>Voltar</Text>
+        </TouchableOpacity>
+      </View>
     );
   }
 
@@ -165,10 +166,10 @@ export default function PerfilMoradia({
 
         {/* Hero Image */}
         <View style={styles.imageContainer}>
-          <Image
-            source={require("../assets/01.jpg")} // Using require for image source
+          <MoradiaImage
+            moradiaId={moradiaId}
+            hasImage={!!dataMoradia?.imagemUrl}
             style={styles.heroImage}
-            resizeMode="cover"
           />
         </View>
 

@@ -3,6 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Alert, Platform } from 'react-native';
 import HttpService from '../services/httpService';
 import API_CONFIG from '../config/apiConfig';
+import imagesApi from '../services/imagesService';
 
 export interface ImageFile {
   uri: string;
@@ -163,10 +164,11 @@ export const useImages = (): UseImagesReturn => {
         setUploadProgress(prev => Math.min(prev + 10, 90));
       }, 100);
 
-      const response = await HttpService.uploadFile(
-        API_CONFIG.ENDPOINTS.MORADIAS.UPLOAD_IMAGE(moradiaId),
-        formData
-      );
+      const response = await imagesApi.uploadMoradiaImage(moradiaId, {
+        uri: imageFile.uri,
+        name: imageFile.name,
+        type: imageFile.type,
+      });
 
       clearInterval(progressInterval);
       setUploadProgress(100);
@@ -227,10 +229,11 @@ export const useImages = (): UseImagesReturn => {
         setUploadProgress(prev => Math.min(prev + 10, 90));
       }, 100);
 
-      const response = await HttpService.uploadFile(
-        API_CONFIG.ENDPOINTS.USERS.UPLOAD_AVATAR(userId),
-        formData
-      );
+      const response = await imagesApi.uploadUserAvatar(userId, {
+        uri: imageFile.uri,
+        name: imageFile.name,
+        type: imageFile.type,
+      });
 
       clearInterval(progressInterval);
       setUploadProgress(100);

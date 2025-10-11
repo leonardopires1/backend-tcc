@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Image, ImageProps, ImageStyle, StyleProp, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import API_CONFIG from '../../config/apiConfig';
+import { getMoradiaImageSource } from '../../services/imagesService';
 
 // Tentar importar a imagem padrão de forma segura
 let defaultMoradiaImage: any = null;
@@ -21,18 +22,37 @@ interface MoradiaImageProps extends Omit<ImageProps, 'source'> {
   hasImage?: boolean;
   style?: StyleProp<ImageStyle>;
   defaultSource?: any;
+  withAuth?: boolean; // permite enviar Authorization header se necessário
 }
 
-const MoradiaImage: React.FC<MoradiaImageProps> = ({ 
-  moradiaId, 
-  hasImage = false, 
-  style, 
+const MoradiaImage: React.FC<MoradiaImageProps> = ({
+  moradiaId,
+  hasImage = false,
+  style,
   defaultSource,
-  ...imageProps 
+  withAuth = false,
+  ...imageProps
 }) => {
   const [error, setError] = useState(false);
+  const [source, setSource] = useState<{ uri: string; headers?: Record<string, string> } | null>(null);
 
-  // Se não tem imagem ou houve erro, mostrar imagem padrão ou ícone
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const imgSource = await getMoradiaImageSource(moradiaId, withAuth);
+        if (mounted) {
+          setSource(imgSource);
+          console.log(`🖼️ Exibindo imagem da moradia ${moradiaId}: ${imgSource.uri}${imgSource.headers ? ' (com Authorization)' : ''}`);
+        }
+      } catch (e) {
+        console.error('Erro ao montar source da imagem:', e);
+        setError(true);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [moradiaId, withAuth]);
+
   if (!hasImage || error) {
     if (defaultSource) {
       return (
@@ -43,8 +63,6 @@ const MoradiaImage: React.FC<MoradiaImageProps> = ({
         />
       );
     }
-    
-    // Usar imagem padrão se disponível
     if (defaultMoradiaImage) {
       return (
         <Image
@@ -54,8 +72,6 @@ const MoradiaImage: React.FC<MoradiaImageProps> = ({
         />
       );
     }
-    
-    // Fallback para ícone se não há imagem padrão
     return (
       <View style={[{
         backgroundColor: '#F0F0F0',
@@ -68,16 +84,23 @@ const MoradiaImage: React.FC<MoradiaImageProps> = ({
     );
   }
 
-  // Construir URL da imagem
-  const imageEndpoint = API_CONFIG.ENDPOINTS.MORADIAS.GET_IMAGE(moradiaId);
-  const imageUrl = `${API_CONFIG.BASE_URL}${imageEndpoint}`;
-
-  console.log(`🖼️ Exibindo imagem da moradia ${moradiaId}: ${imageUrl}`);
+  if (!source) {
+    return (
+      <View style={[{
+        backgroundColor: '#F0F0F0',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 8,
+      }, style]}>
+        <Ionicons name="image-outline" size={24} color="#999" />
+      </View>
+    );
+  }
 
   // Mostrar imagem do servidor
   return (
     <Image
-      source={{ uri: imageUrl }}
+      source={source as any}
       style={style}
       onError={(error) => {
         console.error(`❌ Erro ao exibir imagem da moradia ${moradiaId}:`, error.nativeEvent);

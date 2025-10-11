@@ -116,6 +116,7 @@ export class UsersController {
     return await this.usersService.update(id, updateUserDto);
   }
 
+  @Public()
   @Post('/upload-avatar/:id')
   @ApiOperation({ summary: 'Upload de avatar do usuário' })
   @ApiResponse({ status: 200, description: 'Avatar do usuário atualizado com sucesso' })
@@ -187,6 +188,7 @@ export class UsersController {
   }
 
   // Novo endpoint para servir o avatar diretamente
+  @Public()
   @Get(':id/avatar')
   @ApiOperation({ summary: 'Obter avatar do usuário' })
   @ApiResponse({ status: 200, description: 'Avatar do usuário' })
