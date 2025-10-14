@@ -13,7 +13,7 @@ export type BasicImageFile = {
 };
 
 // Retorna a fonte (uri + headers) para carregar imagem de moradia
-export async function getMoradiaImageSource(moradiaId: number, withAuth = false): Promise<ImageSourceDescriptor> {
+export async function getMoradiaImageSource(moradiaId: number, withAuth = true): Promise<ImageSourceDescriptor> {
   const uri = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.MORADIAS.GET_IMAGE(moradiaId)}`;
 
   if (!withAuth) return { uri };
@@ -24,12 +24,12 @@ export async function getMoradiaImageSource(moradiaId: number, withAuth = false)
   return Authorization ? { uri, headers: { Authorization } } : { uri };
 }
 
-// Retorna a fonte (uri + headers) para carregar avatar de usuário
-export async function getUserAvatarSource(userId: number, withAuth = false): Promise<ImageSourceDescriptor> {
+export async function getUserAvatarSource(userId: number, withAuth = true): Promise<ImageSourceDescriptor> {
   const uri = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.USERS.GET_AVATAR(userId)}`;
 
   if (!withAuth) return { uri };
 
+  // Sempre enviar Authorization por enquanto (servidor ainda requer auth)
   const headers = await HttpService.getAuthHeaders();
   const { Authorization } = headers;
   return Authorization ? { uri, headers: { Authorization } } : { uri };
