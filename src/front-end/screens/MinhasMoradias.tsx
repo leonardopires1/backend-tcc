@@ -1,5 +1,6 @@
 import React, { useMemo, useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMoradias } from '../hooks/useMoradias';
 import { useAuth } from '../contexts/AuthContext';
 import Moradia from '../types/Moradia';

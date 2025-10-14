@@ -1,6 +1,7 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { Loading } from "./components/common/Loading";
 import { AppErrorBoundary } from "./components/common/ErrorBoundary";
@@ -70,11 +71,13 @@ const AppNavigator = () => {
 
 const App = () => {
   return (
-    <AppErrorBoundary>
-      <AuthProvider>
-        <AppNavigator />
-      </AuthProvider>
-    </AppErrorBoundary>
+    <SafeAreaProvider>
+      <AppErrorBoundary>
+        <AuthProvider>
+          <AppNavigator />
+        </AuthProvider>
+      </AppErrorBoundary>
+    </SafeAreaProvider>
   );
 };
 

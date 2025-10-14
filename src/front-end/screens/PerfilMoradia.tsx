@@ -6,8 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Moradia from "../types/Moradia";
 import { Ionicons } from "@expo/vector-icons";
 import { useMoradias } from "../hooks/useMoradias";
