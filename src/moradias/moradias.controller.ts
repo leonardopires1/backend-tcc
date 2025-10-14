@@ -108,6 +108,7 @@ export class MoradiasController {
     }
   }
 
+  @Public()
   @Post('/image-upload/:id')
   @UseInterceptors(FileInterceptor('file', {
     storage: diskStorage({
@@ -163,6 +164,7 @@ export class MoradiasController {
   }
 
   // Novo endpoint para servir a imagem diretamente
+  @Public()
   @Get(':id/image')
   async getMoradiaImage(@Param('id') id: string, @Res({ passthrough: true }) res: Response) {
     try {
