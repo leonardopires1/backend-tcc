@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpException, HttpStatus, UseInterceptors, UploadedFile, Res, StreamableFile, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpException, HttpStatus, UseInterceptors, UploadedFile, Res, StreamableFile, Request, SetMetadata } from '@nestjs/common';
 import { MoradiasService } from './moradias.service';
 import { CreateMoradiaDto } from './dto/create-moradia.dto';
 import { UpdateMoradiaDto } from './dto/update-moradia.dto';
@@ -7,7 +7,7 @@ import { diskStorage } from 'multer';
 import { Response } from 'express';
 import { createReadStream, existsSync } from 'fs';
 import { join } from 'path';
-import { Public } from 'src/common/decorators/user.decorator';
+import { IS_PUBLIC_KEY, Public } from 'src/common/decorators/user.decorator';
 
 @Controller('moradias')
 export class MoradiasController {
@@ -164,7 +164,7 @@ export class MoradiasController {
   }
 
   // Novo endpoint para servir a imagem diretamente
-  @Public()
+  @SetMetadata(IS_PUBLIC_KEY, true)
   @Get(':id/image')
   async getMoradiaImage(@Param('id') id: string, @Res({ passthrough: true }) res: Response) {
     try {
