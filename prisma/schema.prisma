@@ -74,6 +74,8 @@ model AtribuicaoTarefa {
   tarefaId  Int
   usuario   Usuario @relation(fields: [usuarioId], references: [id])
   usuarioId Int
+  DataHoraConclusao DateTime?
+  @@unique([tarefaId, usuarioId])               // evita atribuir a mesma tarefa
 }
 
 model DespesaUsuario {
