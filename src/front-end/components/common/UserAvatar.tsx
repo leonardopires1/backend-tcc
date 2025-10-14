@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Image, ImageProps, ImageStyle, StyleProp, View, Text, ViewStyle } from 'react-native';
-import API_CONFIG from '../../config/apiConfig';
-import httpService from '../../services/httpService';
+import { getUserAvatarSource } from '../../services/imagesService';
 
 interface UserAvatarProps extends Omit<ImageProps, 'source'> {
   userId: number;
@@ -11,6 +10,7 @@ interface UserAvatarProps extends Omit<ImageProps, 'source'> {
   fallbackStyle?: StyleProp<ViewStyle>;
   defaultSource?: any;
   showInitials?: boolean;
+  withAuth?: boolean;
 }
 
 const UserAvatar: React.FC<UserAvatarProps> = ({ 
@@ -21,9 +21,10 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
   fallbackStyle,
   defaultSource,
   showInitials = true,
+  withAuth = true,
   ...imageProps 
 }) => {
-  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [imageSource, setImageSource] = useState<{ uri: string; headers?: any } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -32,6 +33,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
       loadAvatar();
     } else {
       setLoading(false);
+      setImageSource(null);
     }
   }, [userId, hasAvatar]);
 
@@ -40,13 +42,12 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
       setLoading(true);
       setError(false);
       
-      const avatarEndpoint = API_CONFIG.ENDPOINTS.USERS.GET_AVATAR(userId);
-      const fullUrl = `${API_CONFIG.BASE_URL}${avatarEndpoint}`;
+      console.log(`🔄 Carregando avatar do usuário ${userId}...`);
       
-      console.log(`🔄 Carregando avatar do usuário ${userId} de: ${fullUrl}`);
+      const source = await getUserAvatarSource(userId, withAuth);
+      setImageSource(source);
       
-      setImageUri(fullUrl);
-      console.log(`✅ Avatar do usuário ${userId} configurado: ${fullUrl}`);
+      console.log(`✅ Avatar do usuário ${userId} configurado`);
     } catch (err) {
       console.error(`❌ Erro ao carregar avatar do usuário ${userId}:`, err);
       setError(true);
@@ -65,7 +66,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
   };
 
   // Se não tem avatar ou houve erro, mostrar fallback
-  if (!hasAvatar || error || !imageUri) {
+  if (!hasAvatar || error || !imageSource) {
     if (showInitials && userName) {
       return (
         <View style={[{
@@ -152,7 +153,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
   // Mostrar avatar carregado
   return (
     <Image
-      source={{ uri: imageUri }}
+      source={imageSource}
       style={style}
       onError={() => {
         console.error(`❌ Erro ao exibir avatar do usuário ${userId}`);

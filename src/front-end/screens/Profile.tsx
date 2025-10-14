@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useImages, ImageFile } from "../hooks/useImages";
 import UserAvatar from "../components/common/UserAvatar";
@@ -74,6 +74,8 @@ export const Profile = ({ navigation }: { navigation: any }) => {
     uploadUserAvatar, 
     showImagePickerOptions 
   } = useImages();
+  
+  const [avatarKey, setAvatarKey] = useState(Date.now());
 
   const handleLogout = () => {
     Alert.alert("Sair da conta", "Tem certeza que deseja sair?", [
@@ -157,6 +159,8 @@ export const Profile = ({ navigation }: { navigation: any }) => {
           async () => {
             console.log('🔄 Atualizando dados do usuário após upload do avatar...');
             await refreshUserData();
+            // Força atualização do componente UserAvatar
+            setAvatarKey(Date.now());
           }
         );
         
@@ -195,6 +199,7 @@ export const Profile = ({ navigation }: { navigation: any }) => {
           <View style={styles.avatarContainer}>
             <TouchableOpacity style={styles.avatarButton} onPress={handleChangeAvatar}>
               <UserAvatar 
+                key={avatarKey}
                 userId={user?.id || 0}
                 userName={user?.nome || ''}
                 hasAvatar={!!user?.avatarUrl}
@@ -361,8 +366,8 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: "#0073FF",
-    paddingTop: 40,
-    paddingBottom: 20,
+    paddingTop: 15,
+    paddingBottom: 15,
   },
   headerContent: {
     flexDirection: 'row',
@@ -427,8 +432,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   avatarImage: {
-    width: '100%',
-    height: '100%',
+    width: 80,
+    height: 80,
     borderRadius: 40,
   },
   avatarOverlay: {
