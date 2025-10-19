@@ -17,23 +17,30 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "icon": "./assets/icon.png"
+      "icon": "./assets/icon.png",
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
     },
     "android": {
       "edgeToEdgeEnabled": true,
-      "package": "com.leonardopires.RoomMateseuappdegerenciamentodemoradia",
+      "package": "com.leonardopires.roommate",
       "icon": "./assets/icon.png",
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff",
         "monochromeImage": "./assets/icon.png"
-      }
+      },
+      "runtimeVersion": "1.0.0"
     },
+    "owner": "leonardopires",
     "extra": {
       "eas": {
-        "projectId": "1a5ddb13-2ec5-4e88-ab5e-38f9511c1f56"
+        "projectId": "8dab068e-8c37-46df-98da-39e03f8c68fc"
       }
     },
-    "owner": "leonardopires"
+    "updates": {
+      "url": "https://u.expo.dev/8dab068e-8c37-46df-98da-39e03f8c68fc"
+    }
   }
 }
