@@ -140,11 +140,11 @@ export default function BuscarMoradia({ navigation }: { navigation: any }) {
         <View style={styles.titleContainer}>
           {moradias.length > 0 ? (
             <Text style={styles.titleText}>
-              Encontramos {moradias.length} repúblicas
+              Encontramos {moradias.length} moradias
             </Text>
           ) : (
             <Text style={styles.titleText}>
-              Nenhuma república encontrada
+              Nenhuma moradia encontrada
             </Text>
           )}
         </View>

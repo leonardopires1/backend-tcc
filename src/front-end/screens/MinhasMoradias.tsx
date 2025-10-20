@@ -78,12 +78,12 @@ const MinhasMoradias: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.unifiedBackIcon}>‹</Text>
           <Text style={styles.unifiedBackText}>Voltar</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Minhas Repúblicas</Text>
+        <Text style={styles.title}>Minhas Moradias</Text>
       </View>
       {(loading || loadingOwned) && <Text style={styles.statusText}>Carregando...</Text>}
       {error && !loading && <Text style={[styles.statusText, { color: '#dc2626' }]}>Erro ao carregar</Text>}
       {!loading && !loadingOwned && minhasMoradias.length === 0 && (
-        <Text style={styles.statusText}>Você ainda não possui nenhuma república cadastrada.</Text>
+        <Text style={styles.statusText}>Você ainda não possui nenhuma moradia cadastrada.</Text>
       )}
       <FlatList
         data={minhasMoradias}
@@ -95,7 +95,7 @@ const MinhasMoradias: React.FC<Props> = ({ navigation }) => {
       />
       <View style={styles.footer}> 
         <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('CadastrarMoradia')}> 
-          <Text style={styles.addButtonText}>Cadastrar nova república</Text>
+          <Text style={styles.addButtonText}>Cadastrar nova moradia</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

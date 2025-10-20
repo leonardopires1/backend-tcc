@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   StatusBar,
-  TouchableWithoutFeedback,
   Keyboard,
   ScrollView,
   Platform,
@@ -26,7 +25,7 @@ import { useImages, ImageFile } from '../hooks/useImages';
 import SelectRegrasModal from '../components/SelectRegrasModal';
 
 export default function CadastrarMoradia({ navigation }: { navigation: any }) {
-  const [nomeRepublica, setNomeRepublica] = useState('');
+  const [nomeMoradia, setNomeMoradia] = useState('');
   const [cep, setCep] = useState('');
   const [mensalidade, setMensalidade] = useState('');
   const [selectedRegrasIds, setSelectedRegrasIds] = useState<number[]>([]);
@@ -110,7 +109,7 @@ export default function CadastrarMoradia({ navigation }: { navigation: any }) {
     const userId = user ? user.id : null;
     let newErrors: { nome?: string; cep?: string; mensalidade?: string } = {};
     
-    if (!nomeRepublica.trim()) {
+    if (!nomeMoradia.trim()) {
       newErrors.nome = 'Informe o nome da moradia.';
     }
     
@@ -141,7 +140,7 @@ export default function CadastrarMoradia({ navigation }: { navigation: any }) {
     setIsLoading(true);
     try {
       const res = await createMoradia({
-        nome: nomeRepublica.trim(),
+        nome: nomeMoradia.trim(),
         endereco: `CEP: ${cleanCEP}`,
         valorMensalidade: getMensalidadeValue(mensalidade),
         donoId: userId,
@@ -182,7 +181,7 @@ export default function CadastrarMoradia({ navigation }: { navigation: any }) {
         // Atualizar o contexto de autenticação para refletir que o usuário agora faz parte de uma moradia
         await refreshUserData();
         
-        setNomeRepublica('');
+        setNomeMoradia('');
         setCep('');
         setMensalidade('');
         setSelectedRegrasIds([]);
@@ -229,8 +228,8 @@ export default function CadastrarMoradia({ navigation }: { navigation: any }) {
               <TextInput
                 style={[styles.input, errors.nome && styles.inputError]}
                 placeholder="Digite o nome da moradia"
-                value={nomeRepublica}
-                onChangeText={setNomeRepublica}
+                value={nomeMoradia}
+                onChangeText={setNomeMoradia}
                 editable={!isLoading}
                 returnKeyType="next"
                 onSubmitEditing={() => Keyboard.dismiss()}

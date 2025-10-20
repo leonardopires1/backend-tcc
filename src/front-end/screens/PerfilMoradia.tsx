@@ -177,10 +177,10 @@ export default function PerfilMoradia({
         <View style={styles.content}>
           {/* Title Section */}
           <Text style={styles.title}>
-            {dataMoradia?.nome || "Nome da República"}
+            {dataMoradia?.nome || "Nome da moradia"}
           </Text>
           <Text style={styles.subtitle}>
-            {dataMoradia?.descricao || "Descrição da república"}
+            {dataMoradia?.descricao || "Descrição da moradia"}
           </Text>
 
           {/* Rules and Amenities */}
@@ -290,7 +290,7 @@ export default function PerfilMoradia({
                 />
                 <Text style={styles.emptyTitle}>Nada por aqui ainda</Text>
                 <Text style={styles.emptySubtitle}>
-                  Esta república ainda não cadastrou regras ou comodidades.
+                  Esta moradia ainda não cadastrou regras ou comodidades.
                 </Text>
               </View>
             )}
