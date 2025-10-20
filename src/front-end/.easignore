@@ -1,0 +1,30 @@
+# Gradle files
+android/.gradle/
+android/build/
+android/app/build/
+
+# Node modules
+node_modules/
+
+# Expo
+.expo/
+.expo-shared/
+
+# Environment variables
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

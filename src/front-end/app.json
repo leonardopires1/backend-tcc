@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "icon": "./assets/icon.png",
     "splash": {
       "image": "./assets/icon.png",
       "resizeMode": "contain",
@@ -17,7 +16,6 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "icon": "./assets/icon.png",
       "runtimeVersion": {
         "policy": "appVersion"
       }
@@ -25,12 +23,6 @@
     "android": {
       "edgeToEdgeEnabled": true,
       "package": "com.leonardopires.roommate",
-      "icon": "./assets/icon.png",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#ffffff",
-        "monochromeImage": "./assets/icon.png"
-      },
       "runtimeVersion": "1.0.0"
     },
     "owner": "leonardopires",

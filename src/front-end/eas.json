@@ -7,19 +7,21 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_BASE_URL": "http://eq3.ini3b.projetoscti.com.br/api"
+        "EXPO_PUBLIC_BASE_URL": "https://eq3.ini3b.projetoscti.com.br/api"
       },
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "image": "latest"
       }
     },
     "production": {
       "distribution": "store",
       "env": {
-        "EXPO_PUBLIC_BASE_URL": "http://eq3.ini3b.projetoscti.com.br/api"
+        "EXPO_PUBLIC_BASE_URL": "https://eq3.ini3b.projetoscti.com.br/api"
       },
       "android": {
-        "buildType": "app-bundle"
+        "buildType": "app-bundle",
+        "image": "latest"
       }
     }
   }

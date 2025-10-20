@@ -4,7 +4,7 @@ import { Client } from '@googlemaps/google-maps-services-js';
 export const GOOGLE_MAPS_CONFIG = {
   API_KEY: __DEV__ 
     ? 'SUA_API_KEY_AQUI' // Substitua pela sua API key
-    : process.env.GOOGLE_MAPS_API_KEY || '',
+    : process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '',
   
   // Configurações específicas para diferentes serviços
   GEOCODING: {
