@@ -610,63 +610,170 @@ body {
 
 /* Download Section */
 .download {
-    padding: 100px 0;
+    padding: 120px 0;
     background: var(--gradient-primary);
     color: var(--white);
+    position: relative;
+    overflow: hidden;
+}
+
+.download::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 20% 50%, rgba(76, 175, 80, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(0, 115, 255, 0.2) 0%, transparent 50%);
+    pointer-events: none;
 }
 
 .download-content {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 60px;
+    gap: 80px;
     align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.download-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    padding: 8px 20px;
+    border-radius: 50px;
+    margin-bottom: 24px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.download-badge i {
+    font-size: 1.2rem;
 }
 
 .download-text h2 {
-    font-size: 2.5rem;
+    font-size: 3rem;
     font-weight: 700;
     margin-bottom: 24px;
+    line-height: 1.2;
 }
 
 .download-text p {
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     margin-bottom: 40px;
-    opacity: 0.9;
+    opacity: 0.95;
+    line-height: 1.6;
 }
 
 .download-buttons {
     display: flex;
     gap: 16px;
+    margin-bottom: 40px;
+}
+
+.btn-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 32px;
+    background: var(--white);
+    color: #1a1a1c;
+    border-radius: 16px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+}
+
+.btn-download:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    color: #000000;
+}
+
+.btn-download i {
+    font-size: 2rem;
+    color: var(--primary-blue);
+}
+
+.btn-download-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.btn-download-label {
+    font-size: 0.75rem;
+    opacity: 0.6;
+    font-weight: 400;
+    color: #4a4a4a;
+}
+
+.btn-download-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1a1a1c;
+}
+
+.download-features {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
     margin-bottom: 48px;
 }
 
-.download-btn img {
-    height: 60px;
-    transition: transform 0.3s ease;
+.download-feature {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1rem;
 }
 
-.download-btn:hover img {
-    transform: scale(1.05);
+.download-feature i {
+    font-size: 1.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 6px;
+    border-radius: 50%;
 }
 
 .qr-code {
-    text-align: center;
-}
-
-.qr-placeholder {
-    width: 120px;
-    height: 120px;
-    background: var(--white);
-    border-radius: 12px;
-    margin: 0 auto 16px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 3rem;
+    gap: 20px;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.qr-placeholder::before {
-    content: '📱';
+.qr-code-wrapper {
+    flex-shrink: 0;
+}
+
+.qr-code-image {
+    width: 100px;
+    height: 100px;
+    background: var(--white);
+    padding: 8px;
+    border-radius: 12px;
+    display: block;
+}
+
+.qr-code-text {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 0.95rem;
+    opacity: 0.95;
+}
+
+.qr-code-text i {
+    font-size: 1.5rem;
 }
 
 .download-illustration {
@@ -952,6 +1059,23 @@ body {
     .contact-content {
         grid-template-columns: 1fr;
         text-align: center;
+    }
+
+    .download-text h2 {
+        font-size: 2.2rem;
+    }
+
+    .download-buttons {
+        justify-content: center;
+    }
+
+    .qr-code {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .download-features {
+        align-items: center;
     }
 
     .footer-content {
