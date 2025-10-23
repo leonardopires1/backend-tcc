@@ -2,6 +2,9 @@ import { Image, StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import Moradia from "../types/Moradia";
 
+// imagem padrão local (fallback)
+const defaultImage = require('../assets/fotoDefaultMoradia.jpg');
+
 interface MoradiaCardProps {
   moradia: Moradia;
   onPress?: () => void;
@@ -43,7 +46,11 @@ export default function MoradiaCard({
     <TouchableOpacity style={styles.container} onPress={onPress}>
       <View style={styles.imageContainer}>
         <Image
-          source={{ uri: moradia.imagens?.[0] || 'https://via.placeholder.com/300x200' }}
+          source={
+            moradia.imagens && moradia.imagens.length > 0 && moradia.imagens[0]
+              ? { uri: moradia.imagens[0] }
+              : defaultImage
+          }
           style={styles.image}
           resizeMode="cover"
         />
@@ -69,7 +76,7 @@ export default function MoradiaCard({
         <View style={styles.locationContainer}>
           <Ionicons name="location-outline" size={16} color="#666" />
           <Text style={styles.location} numberOfLines={1}>
-            {moradia.endereco}
+            {moradia.cep}
           </Text>
         </View>
         
