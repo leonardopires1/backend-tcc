@@ -141,21 +141,37 @@ export class MoradiasService {
       );
     }
 
-    // Verifica se algum morador já está em outra moradia (exclui o dono da verificação)
-    const moradoresOcupados = await this.prisma.usuario.findMany({
-      where: {
-        id: { in: moradoresIds },
-        moradiaId: { not: null },
-      },
-      select: { id: true },
-    });
+    // Verifica se todos os IDs de moradores existem no banco
+    if (moradoresIds.length > 0) {
+      const usuariosExistentes = await this.prisma.usuario.findMany({
+        where: { id: { in: moradoresIds } },
+        select: { id: true },
+      });
+      const existentesIds = usuariosExistentes.map((u) => u.id);
+      const idsFaltantes = moradoresIds.filter((id) => !existentesIds.includes(id));
+      if (idsFaltantes.length > 0) {
+        throw new HttpException(
+          `Usuário(s) não encontrado(s): ${idsFaltantes.join(', ')}`,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
 
-    if (moradoresOcupados.length > 0) {
-      const ids = moradoresOcupados.map((u) => u.id).join(', ');
-      throw new HttpException(
-        `Usuário(s) já vinculados a outra moradia: ${ids}`,
-        HttpStatus.BAD_REQUEST,
-      );
+      // Verifica se algum morador já está em outra moradia (exclui o dono da verificação)
+      const moradoresOcupados = await this.prisma.usuario.findMany({
+        where: {
+          id: { in: moradoresIds },
+          moradiaId: { not: null },
+        },
+        select: { id: true },
+      });
+
+      if (moradoresOcupados.length > 0) {
+        const ids = moradoresOcupados.map((u) => u.id).join(', ');
+        throw new HttpException(
+          `Usuário(s) já vinculados a outra moradia: ${ids}`,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
     }
 
     // Usar transação para garantir que tudo seja feito atomicamente

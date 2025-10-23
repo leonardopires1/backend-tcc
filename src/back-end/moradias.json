@@ -1,0 +1,128 @@
+[
+  {
+    "nome": "Moradia Jardim das Flores",
+    "CEP": "12345678",
+    "donoId": 1,
+    "valorMensalidade": 750.0,
+    "moradoresIds": [2, 3],
+    "regras": { "id": [1, 4] },
+    "comodidades": [{ "nome": "Wi-Fi" }, { "nome": "Lavanderia" }],
+    "tarefas": [
+      { "nome": "Limpar cozinha", "recorrencia": "weekly" },
+      { "nome": "Recolher lixo", "recorrencia": "daily" }
+    ],
+    "despesas": [
+      {
+        "nome": "Conta de água",
+        "valorTotal": 120.5,
+        "vencimento": "2025-11-05T00:00:00.000Z",
+        "tipo": "água"
+      }
+    ]
+  },
+  {
+    "nome": "Residência Sol Nascente",
+    "CEP": "23456789",
+    "donoId": 1,
+    "valorMensalidade": 980.75,
+    "imagemUrl": "sol_nascente.jpg",
+    "moradoresIds": [4],
+    "regras": { "id": [2] },
+    "comodidades": [{ "nome": "Estacionamento" }, { "nome": "Piscina" }],
+    "tarefas": [{ "nome": "Jardinagem", "recorrencia": "monthly" }],
+    "despesas": [
+      {
+        "nome": "Condomínio",
+        "valorTotal": 250.0,
+        "vencimento": "2025-11-10T00:00:00.000Z",
+        "tipo": "condomínio"
+      }
+    ]
+  },
+  {
+    "nome": "Casa do Parque",
+    "CEP": "34567890",
+    "donoId": 2,
+    "valorMensalidade": 620.0,
+    "moradoresIds": [5, 6, 7],
+    "regras": { "id": [3, 5] },
+    "comodidades": [{ "nome": "Sala de estudos" }],
+    "tarefas": [{ "nome": "Limpar banheiro", "recorrencia": "weekly" }],
+    "despesas": [
+      {
+        "nome": "Energia elétrica",
+        "valorTotal": 180.9,
+        "vencimento": "2025-11-08T00:00:00.000Z",
+        "tipo": "energia"
+      }
+    ]
+  },
+  {
+    "nome": "Apartamento Central",
+    "CEP": "45678901",
+    "donoId": 3,
+    "valorMensalidade": 1500.0,
+    "imagemUrl": "apt_central.png",
+    "regras": { "id": [] },
+    "comodidades": [{ "nome": "Academia" }, { "nome": "Elevador" }],
+    "tarefas": [],
+    "despesas": []
+  },
+  {
+    "nome": "Morada Estudantil",
+    "CEP": "56789012",
+    "donoId": 2,
+    "valorMensalidade": 420.0,
+    "moradoresIds": [8, 9, 10],
+    "regras": { "id": [1, 2, 3] },
+    "comodidades": [{ "nome": "Cozinha compartilhada" }],
+    "tarefas": [{ "nome": "Rodízio de limpeza", "recorrencia": "weekly" }],
+    "despesas": [
+      {
+        "nome": "Internet",
+        "valorTotal": 100.0,
+        "vencimento": "2025-11-03T00:00:00.000Z",
+        "tipo": "internet"
+      }
+    ]
+  },
+  {
+    "nome": "Cantinho da Serra",
+    "CEP": "67890123",
+    "donoId": 3,
+    "valorMensalidade": 1100.5,
+    "imagemUrl": "serra.webp",
+    "moradoresIds": [],
+    "regras": { "id": [6] },
+    "comodidades": [{ "nome": "Churrasqueira" }, { "nome": "Área verde" }]
+  },
+  {
+    "nome": "Vila Nova",
+    "CEP": "78901234",
+    "donoId": 1,
+    "valorMensalidade": 850.0,
+    "moradoresIds": [11],
+    "regras": { "id": [4] },
+    "comodidades": [{ "nome": "Garagem" }],
+    "despesas": [
+      {
+        "nome": "Manutenção",
+        "valorTotal": 300.0,
+        "vencimento": "2025-12-01T00:00:00.000Z",
+        "tipo": "manutenção"
+      }
+    ]
+  },
+  {
+    "nome": "Refúgio do Lago",
+    "CEP": "89012345",
+    "donoId": 2,
+    "valorMensalidade": 1299.99,
+    "imagemUrl": null,
+    "moradoresIds": [12, 13],
+    "regras": { "id": [2, 7] },
+    "comodidades": [{ "nome": "Vista para o lago" }, { "nome": "Varanda" }],
+    "tarefas": [{ "nome": "Verificar fechaduras", "recorrencia": "monthly" }],
+    "despesas": []
+  }
+]
