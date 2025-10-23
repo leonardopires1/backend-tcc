@@ -65,12 +65,12 @@ import {
     // Gerar access token e refresh token
     const expiresIn = 24 * 60 * 60; // 24 horas em segundos
     const accessToken = await this.jwtService.signAsync(payload, {
-      expiresIn: this.configService.get<string>('jwt.expiresIn') || '24h',
+      expiresIn: '24h' as any,
     });
     
     const refreshToken = await this.jwtService.signAsync(
       { sub: user.id, type: 'refresh' },
-      { expiresIn: '7d' } // Refresh token válido por 7 dias
+      { expiresIn: '7d' as any } // Refresh token válido por 7 dias
     );
     
     // Remover senha do retorno
@@ -111,7 +111,7 @@ import {
       
       const expiresIn = 24 * 60 * 60; // 24 horas em segundos
       const accessToken = await this.jwtService.signAsync(newPayload, {
-        expiresIn: this.configService.get<string>('jwt.expiresIn') || '24h',
+        expiresIn: '24h' as any,
       });
       
       console.log('🔄 Token renovado para usuário:', user.id);

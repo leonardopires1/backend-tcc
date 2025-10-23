@@ -15,8 +15,8 @@ export class MoradiasController {
 
   @Post()
   async create(@Body() createMoradiaDto: CreateMoradiaDto) {
-    if (!createMoradiaDto.nome || !createMoradiaDto.endereco || !createMoradiaDto.donoId || !createMoradiaDto.valorMensalidade) {
-      throw new HttpException('Nome, endereço, donoId e valorMensalidade são obrigatórios.', HttpStatus.BAD_REQUEST);
+    if (!createMoradiaDto.nome || !createMoradiaDto.CEP || !createMoradiaDto.donoId || !createMoradiaDto.valorMensalidade) {
+      throw new HttpException('Nome, CEP, donoId e valorMensalidade são obrigatórios.', HttpStatus.BAD_REQUEST);
     }
     
     if (createMoradiaDto.valorMensalidade <= 0) {

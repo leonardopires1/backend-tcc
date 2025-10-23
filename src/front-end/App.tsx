@@ -16,6 +16,7 @@ import CadastrarMoradia from "./screens/CadastrarMoradia";
 import PerfilMoradia from "./screens/PerfilMoradia";
 import MinhasMoradias from "./screens/MinhasMoradias";
 import { Profile } from "./screens/Profile";
+import { EditProfile } from "./screens/EditProfile";
 import ForgotPassword from "./screens/ForgotPassword";
 import moradiaDashboard from "./screens/MoradiaDashboard";
 
@@ -52,6 +53,7 @@ const AppNavigator = () => {
             <Stack.Screen name="PerfilMoradia" component={PerfilMoradia} />
             <Stack.Screen name="MinhasMoradias" component={MinhasMoradias} />
             <Stack.Screen name="Profile" component={Profile} />
+            <Stack.Screen name="EditProfile" component={EditProfile} />
             <Stack.Screen name="MoradiaDashboard" component={moradiaDashboard} />
             <Stack.Screen name="BoasVindas" component={BoasVindas} />
           </>

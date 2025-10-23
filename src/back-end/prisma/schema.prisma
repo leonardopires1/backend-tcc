@@ -31,7 +31,9 @@ model Moradia {
   id               Int             @id @default(autoincrement())
   nome             String
   descricao        String          @default("Moradia compartilhada")
-  endereco         String?
+  cep              String?         // CEP da moradia
+  latitude         Float?          // Latitude para localização no mapa
+  longitude        Float?          // Longitude para localização no mapa
   criadoEm         DateTime        @default(now())
   valorMensalidade Float
   imagemUrl        String?         // Campo para armazenar URL/nome da imagem da moradia

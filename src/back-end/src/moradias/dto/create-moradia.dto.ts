@@ -7,7 +7,7 @@ export class CreateMoradiaDto {
 
   @IsString()
   @IsNotEmpty()
-  endereco: string;
+  CEP: string;
 
   @IsNumber()
   donoId: number;

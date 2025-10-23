@@ -20,10 +20,92 @@ export class MoradiasService {
   @Inject()
   private readonly comodidadesMoradiaService: ComodidadesMoradiaService;
 
+  /**
+   * Busca as coordenadas (latitude e longitude) a partir do CEP usando ViaCEP + Nominatim
+   */
+  private async buscarCoordenadasPorCep(
+    cep: string,
+  ): Promise<{ latitude: number; longitude: number; endereco: string } | null> {
+    try {
+      const cepLimpo = cep.replace(/\D/g, '');
+
+      if (cepLimpo.length !== 8) {
+        console.warn(`⚠️  CEP inválido: ${cep}`);
+        return null;
+      }
+
+      console.log(`🔍 Buscando coordenadas para o CEP: ${cepLimpo}`);
+
+      // 1. Buscar endereço no ViaCEP
+      const viaCepResponse = await fetch(
+        `https://viacep.com.br/ws/${cepLimpo}/json/`,
+      );
+
+      if (!viaCepResponse.ok) {
+        console.error(`❌ Erro ao consultar ViaCEP: ${viaCepResponse.status}`);
+        return null;
+      }
+
+      const dadosViaCep = await viaCepResponse.json();
+
+      if (dadosViaCep.erro) {
+        console.warn(`⚠️  CEP não encontrado no ViaCEP: ${cepLimpo}`);
+        return null;
+      }
+
+      // Montar endereço completo
+      const enderecoCompleto = `${dadosViaCep.logradouro}, ${dadosViaCep.bairro}, ${dadosViaCep.localidade}, ${dadosViaCep.uf}, Brazil`;
+      console.log(`📍 Endereço encontrado: ${enderecoCompleto}`);
+
+      // 2. Buscar coordenadas no Nominatim (OpenStreetMap)
+      const query = encodeURIComponent(enderecoCompleto);
+      const nominatimResponse = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`,
+        {
+          headers: {
+            'User-Agent': 'RoommateApp/1.0', // Nominatim requer User-Agent
+          },
+        },
+      );
+
+      if (!nominatimResponse.ok) {
+        console.error(
+          `❌ Erro ao consultar Nominatim: ${nominatimResponse.status}`,
+        );
+        return null;
+      }
+
+      const dadosNominatim = await nominatimResponse.json();
+
+      if (!dadosNominatim || dadosNominatim.length === 0) {
+        console.warn(
+          `⚠️  Coordenadas não encontradas para o endereço: ${enderecoCompleto}`,
+        );
+        return null;
+      }
+
+      const latitude = parseFloat(dadosNominatim[0].lat);
+      const longitude = parseFloat(dadosNominatim[0].lon);
+
+      console.log(
+        `✅ Coordenadas encontradas: Lat ${latitude}, Lng ${longitude}`,
+      );
+
+      return {
+        latitude,
+        longitude,
+        endereco: `${dadosViaCep.logradouro}, ${dadosViaCep.bairro}, ${dadosViaCep.localidade}/${dadosViaCep.uf}`,
+      };
+    } catch (error) {
+      console.error(`❌ Erro ao buscar coordenadas por CEP:`, error);
+      return null;
+    }
+  }
+
   async create(createMoradiaDto: CreateMoradiaDto) {
     const {
       nome,
-      endereco,
+      CEP,
       donoId,
       valorMensalidade,
       imagemUrl,
@@ -33,6 +115,20 @@ export class MoradiasService {
       regras = { id: [] },
       comodidades = [{ nome: '', descricao: '' }],
     } = createMoradiaDto;
+
+    // Buscar coordenadas a partir do CEP
+    let latitude: number | null = null;
+    let longitude: number | null = null;
+    let enderecoFormatado: string | null = null;
+
+    if (CEP) {
+      const coordenadas = await this.buscarCoordenadasPorCep(CEP);
+      if (coordenadas) {
+        latitude = coordenadas.latitude;
+        longitude = coordenadas.longitude;
+        enderecoFormatado = coordenadas.endereco;
+      }
+    }
 
     // Verifica se o dono existe
     const dono = await this.prisma.usuario.findUnique({
@@ -68,7 +164,9 @@ export class MoradiasService {
       const novaMoradia = await prisma.moradia.create({
         data: {
           nome,
-          endereco,
+          cep: CEP,
+          latitude,
+          longitude,
           valorMensalidade,
           imagemUrl,
           dono: { connect: { id: donoId } },
@@ -102,8 +200,10 @@ export class MoradiasService {
       });
 
       console.log(`🏠 Moradia criada: ${novaMoradia.id} - Dono: ${donoId}`);
-      
-      console.log(`👤 Usuário ${donoId} definido como dono da moradia ${novaMoradia.id}`);
+
+      console.log(
+        `👤 Usuário ${donoId} definido como dono da moradia ${novaMoradia.id}`,
+      );
 
       // Atualiza os demais usuários para vinculá-los à nova moradia (se houver)
       if (moradoresIds.length > 0) {
@@ -128,7 +228,9 @@ export class MoradiasService {
           },
         });
 
-        console.log(`👥 ${moradoresIds.length} moradores adicionais vinculados à moradia ${novaMoradia.id}`);
+        console.log(
+          `👥 ${moradoresIds.length} moradores adicionais vinculados à moradia ${novaMoradia.id}`,
+        );
       }
 
       return novaMoradia;
@@ -142,8 +244,6 @@ export class MoradiasService {
       );
     }
 
-
-
     return resultado;
   }
 
@@ -153,16 +253,18 @@ export class MoradiasService {
         id: true,
         nome: true,
         descricao: true,
-        endereco: true,
+        cep: true,
+        latitude: true,
+        longitude: true,
         valorMensalidade: true,
         imagemUrl: true, // Incluir imagem da moradia
         dono: { select: { id: true, nome: true, email: true } },
-        moradores: { 
-          select: { 
-            id: true, 
-            nome: true, 
-            email: true 
-          } 
+        moradores: {
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+          },
         },
         _count: {
           select: {
@@ -181,16 +283,18 @@ export class MoradiasService {
         id: true,
         nome: true,
         descricao: true,
-        endereco: true,
+        cep: true,
+        latitude: true,
+        longitude: true,
         valorMensalidade: true,
         imagemUrl: true, // Incluir imagem da moradia
         dono: { select: { id: true, nome: true, email: true } },
         moradores: {
-          select: { id: true, nome: true, email: true }
-        }
-      }
+          select: { id: true, nome: true, email: true },
+        },
+      },
     });
-    
+
     return moradias;
   }
 
@@ -204,42 +308,46 @@ export class MoradiasService {
             id: true,
             nome: true,
             descricao: true,
-            endereco: true,
+            cep: true,
+            latitude: true,
+            longitude: true,
             valorMensalidade: true,
             imagemUrl: true,
             dono: { select: { id: true, nome: true, email: true } },
             moradores: {
-              select: { 
-                id: true, 
-                nome: true, 
-                email: true, 
-                telefone: true, 
-                genero: true 
-              }
-            }
-          }
+              select: {
+                id: true,
+                nome: true,
+                email: true,
+                telefone: true,
+                genero: true,
+              },
+            },
+          },
         },
         moradiasDono: {
           select: {
             id: true,
             nome: true,
             descricao: true,
-            endereco: true,
+            cep: true,
+            latitude: true,
+            longitude: true,
             valorMensalidade: true,
             imagemUrl: true,
             dono: { select: { id: true, nome: true, email: true } },
             moradores: {
-              select: { 
-                id: true, 
-                nome: true, 
-                email: true, 
-                telefone: true, 
-                genero: true 
-              }
-            }
-          }
-        }
-      }
+              select: {
+                id: true,
+                nome: true,
+                email: true,
+                telefone: true,
+                genero: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!usuario) {
@@ -266,20 +374,22 @@ export class MoradiasService {
       select: {
         id: true,
         nome: true,
-        endereco: true,
+        cep: true,
+        latitude: true,
+        longitude: true,
         descricao: true,
         valorMensalidade: true,
         imagemUrl: true, // Incluir imagem da moradia
         regrasMoradia: true,
         comodidades: true,
         dono: { select: { id: true, nome: true, email: true } },
-        moradores: { 
-          select: { 
-            id: true, 
-            nome: true, 
-            email: true, 
-            telefone: true 
-          } 
+        moradores: {
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+            telefone: true,
+          },
         },
         _count: {
           select: {
@@ -297,11 +407,11 @@ export class MoradiasService {
   }
 
   async update(id: number, updateMoradiaDto: UpdateMoradiaDto) {
-    const { nome, endereco, donoId, valorMensalidade, imagemUrl } = updateMoradiaDto;
+    const { nome, CEP, donoId, valorMensalidade, imagemUrl } = updateMoradiaDto;
 
     const data: any = {
       ...(nome && { nome }),
-      ...(endereco && { endereco }),
+      ...(CEP && { CEP }),
       ...(valorMensalidade && { valorMensalidade }),
       ...(imagemUrl !== undefined && { imagemUrl }), // Permite atualizar imagemUrl mesmo que seja null
       ...(donoId && { dono: { connect: { id: donoId } } }),
@@ -314,7 +424,9 @@ export class MoradiasService {
         select: {
           id: true,
           nome: true,
-          endereco: true,
+          cep: true,
+          latitude: true,
+          longitude: true,
           valorMensalidade: true,
           imagemUrl: true, // Incluir imagem da moradia
           dono: { select: { id: true, nome: true, email: true } },
@@ -331,7 +443,7 @@ export class MoradiasService {
     // Verificar se a moradia existe
     const moradia = await this.prisma.moradia.findUnique({
       where: { id: moradiaId },
-      include: { 
+      include: {
         moradores: true,
         _count: {
           select: {
@@ -347,7 +459,10 @@ export class MoradiasService {
 
     // Verificar se já não atingiu o limite de 4 moradores
     if (moradia.moradores.length >= 4) {
-      throw new HttpException('Moradia já possui o número máximo de moradores (4)', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Moradia já possui o número máximo de moradores (4)',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     // Verificar se o usuário existe
@@ -355,7 +470,7 @@ export class MoradiasService {
       where: { id: usuarioId },
       include: {
         moradiasDono: true, // Incluir moradias onde é dono
-      }
+      },
     });
 
     if (!usuario) {
@@ -363,20 +478,31 @@ export class MoradiasService {
     }
 
     // Verificar se o usuário já é dono desta moradia específica
-    const jaDonoDesta = usuario.moradiasDono.some(m => m.id === moradiaId);
+    const jaDonoDesta = usuario.moradiasDono.some((m) => m.id === moradiaId);
     if (jaDonoDesta) {
-      throw new HttpException('Usuário é dono desta moradia e não pode ser adicionado como morador', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Usuário é dono desta moradia e não pode ser adicionado como morador',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     // Verificar se o usuário já está em uma moradia COMO MORADOR (não como dono)
     if (usuario.moradiaId) {
-      throw new HttpException('Usuário já faz parte de uma moradia como morador', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Usuário já faz parte de uma moradia como morador',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     // Verificar se o usuário já é morador desta moradia
-    const jaEhMorador = moradia.moradores.some(morador => morador.id === usuarioId);
+    const jaEhMorador = moradia.moradores.some(
+      (morador) => morador.id === usuarioId,
+    );
     if (jaEhMorador) {
-      throw new HttpException('Usuário já é morador desta moradia', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Usuário já é morador desta moradia',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     // Usar transação para garantir consistência
@@ -403,7 +529,9 @@ export class MoradiasService {
         select: {
           id: true,
           nome: true,
-          endereco: true,
+          cep: true,
+          latitude: true,
+          longitude: true,
           valorMensalidade: true,
           imagemUrl: true, // Incluir imagem da moradia
           moradores: {
@@ -429,28 +557,33 @@ export class MoradiasService {
 
   async remove(id: number) {
     console.log(`🗑️  Iniciando remoção da moradia ID: ${id}`);
-    
+
     try {
       // Inicia uma transação com timeout estendido (30 segundos)
-      const result = await this.prisma.$transaction(async (prisma) => {
-        const moradiaRemovida = await prisma.moradia.delete({
-          where: {
-            id,
-          },
-          select: {
-            id: true,
-            nome: true,
-            endereco: true,
-            imagemUrl: true, // Incluir imagem da moradia
-          },
-        });
-        console.log(`✅ Moradia removida:`, moradiaRemovida);
+      const result = await this.prisma.$transaction(
+        async (prisma) => {
+          const moradiaRemovida = await prisma.moradia.delete({
+            where: {
+              id,
+            },
+            select: {
+              id: true,
+              nome: true,
+              cep: true,
+              latitude: true,
+              longitude: true,
+              imagemUrl: true, // Incluir imagem da moradia
+            },
+          });
+          console.log(`✅ Moradia removida:`, moradiaRemovida);
 
-        return moradiaRemovida;
-      }, {
-        timeout: 30000, // 30 segundos de timeout
-        maxWait: 10000, // Máximo 10 segundos para conseguir uma conexão
-      });
+          return moradiaRemovida;
+        },
+        {
+          timeout: 30000, // 30 segundos de timeout
+          maxWait: 10000, // Máximo 10 segundos para conseguir uma conexão
+        },
+      );
 
       console.log(`🎉 Moradia ${id} removida com sucesso!`);
       return result;

@@ -2,7 +2,9 @@ export default interface Moradia {
     id: number;
     nome: string;
     descricao: string;
-    endereco: string;
+    cep: string;
+    latitude: number;
+    longitude: number;
     valorMensalidade: number;
     imagemUrl?: string; // Campo para URL da imagem da moradia
     criadoEm?: string;
@@ -29,8 +31,4 @@ export default interface Moradia {
         usuario: string;
         data: string;
     }>;
-    localizacao?: {
-        latitude: number;
-        longitude: number;
-    };
 }

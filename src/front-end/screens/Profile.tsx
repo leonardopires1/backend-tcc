@@ -318,7 +318,7 @@ export const Profile = ({ navigation }: { navigation: any }) => {
               icon="person-outline"
               title="Editar Perfil"
               subtitle="Atualize suas informações"
-              onPress={() => {/* TODO: Implementar */}}
+              onPress={() => navigation.navigate("EditProfile")}
               color="#FF9800"
             />
             <ProfileOption

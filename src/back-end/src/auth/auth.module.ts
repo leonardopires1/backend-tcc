@@ -20,9 +20,7 @@ import { EmailModule } from 'src/email/email.module';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('jwt.secret'),
         signOptions: { 
-          expiresIn: configService.get<string>('jwt.expiresIn') || '24h',
-          issuer: 'roommate-api',
-          audience: 'roommate-app',
+          expiresIn: '24h' as any, // Compatibilidade com @nestjs/jwt v11
         },
       }),
       inject: [ConfigService],

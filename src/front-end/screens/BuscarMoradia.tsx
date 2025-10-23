@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import MapView, { Marker } from "react-native-maps";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import * as Location from 'expo-location';
 import Moradia from "../types/Moradia";
 import MoradiaCard from "../components/moradiaCard";
@@ -22,6 +22,7 @@ export default function BuscarMoradia({ navigation }: { navigation: any }) {
   const { moradias, loading, error, refreshMoradias } = useMoradias();
   const [refreshing, setRefreshing] = useState(false);
   const [userLocation, setUserLocation] = useState<string>("Localizando...");
+  const [location, setLocation] = useState<Location.LocationObject | null>(null);
 
   useEffect(() => {
     getCurrentLocation();
@@ -39,6 +40,7 @@ export default function BuscarMoradia({ navigation }: { navigation: any }) {
 
       // Obtém a localização atual
       const location = await Location.getCurrentPositionAsync({});
+      setLocation(location);
       
       // Faz geocodificação reversa para obter o endereço
       const reverseGeocode = await Location.reverseGeocodeAsync({
@@ -112,25 +114,21 @@ export default function BuscarMoradia({ navigation }: { navigation: any }) {
           <MapView
             style={styles.map}
             initialRegion={{
-              latitude: -22.3156,
-              longitude: -49.0709,
+              latitude: location?.coords?.latitude || -22.3156,
+              longitude: location?.coords?.longitude || -49.0709,
               latitudeDelta: 0.0922,
               longitudeDelta: 0.0421,
             }}
           >
-            <Marker
-              coordinate={{ latitude: -22.3156, longitude: -49.0709 }}
-              title="Bauru Centro"
-            />
             {moradias.map((moradia, index) => (
               <Marker
                 key={moradia.id}
                 coordinate={{ 
-                  latitude: -22.3156 + (index * 0.001), // Simular posições diferentes
-                  longitude: -49.0709 + (index * 0.001) 
+                  latitude: moradia.latitude || -22.3156 + (index * 0.001), // Simular posições diferentes
+                  longitude: moradia.longitude || -49.0709 + (index * 0.001) 
                 }}
                 title={moradia.nome}
-                description={moradia.endereco}
+                description={moradia.cep}
                 onCalloutPress={() => handleMoradiaPress(moradia)}
               />
             ))}
