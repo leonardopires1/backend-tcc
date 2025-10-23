@@ -126,7 +126,7 @@ export class UsersService {
           select: {
             id: true,
             nome: true,
-            cep: true,
+            endereco: true,
           },
         },
       },
@@ -157,7 +157,7 @@ export class UsersService {
           select: {
             id: true,
             nome: true,
-            cep: true,
+            endereco: true,
           },
         },
       },
@@ -186,7 +186,7 @@ export class UsersService {
           select: {
             id: true,
             nome: true,
-            cep: true,
+            endereco: true,
           },
         },
       },
@@ -213,7 +213,7 @@ export class UsersService {
             select: {
               id: true,
               nome: true,
-              cep: true,
+              endereco: true,
             },
           },
         },
